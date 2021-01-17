@@ -57,8 +57,8 @@ class vlc_vector
         typedef uint64_t                                 value_type;
         typedef random_access_const_iterator<vlc_vector> iterator;
         typedef iterator                                 const_iterator;
-        typedef const value_type                         reference;
-        typedef const value_type                         const_reference;
+        typedef value_type                               reference;
+        typedef value_type                               const_reference;
         typedef const value_type*                        const_pointer;
         typedef ptrdiff_t                                difference_type;
         typedef int_vector<>::size_type                  size_type;

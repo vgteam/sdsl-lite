@@ -54,7 +54,7 @@ class dac_vector_dp
         typedef t_bv                                     overflow_bv;
         typedef typename t_bv::rank_1_type               overflow_bv_rank1;
         typedef const_iterator                           iterator;
-        typedef const value_type                         const_reference;
+        typedef value_type                               const_reference;
         typedef const_reference                          reference;
         typedef const_reference*                         pointer;
         typedef const pointer                            const_pointer;
@@ -341,7 +341,7 @@ class dac_vector
         typedef typename int_vector<>::value_type        value_type;
         typedef random_access_const_iterator<dac_vector> const_iterator;
         typedef const_iterator                           iterator;
-        typedef const value_type                         const_reference;
+        typedef value_type                               const_reference;
         typedef const_reference                          reference;
         typedef const_reference*                         pointer;
         typedef const pointer                            const_pointer;

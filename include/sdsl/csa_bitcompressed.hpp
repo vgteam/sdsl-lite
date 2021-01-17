@@ -62,7 +62,7 @@ class csa_bitcompressed
         typedef uint64_t                                        value_type;    // STL Container requirement
         typedef random_access_const_iterator<csa_bitcompressed> const_iterator;// STL Container requirement
         typedef const_iterator                                  iterator;        // STL Container requirement
-        typedef const value_type                                const_reference;
+        typedef value_type                                      const_reference;
         typedef const_reference                                 reference;
         typedef const_reference*                                pointer;
         typedef const pointer                                   const_pointer;

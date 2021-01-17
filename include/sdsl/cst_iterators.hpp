@@ -48,7 +48,7 @@ class cst_dfs_const_forward_iterator: public std::iterator<std::forward_iterator
 {
     public:
         typedef typename Cst::node_type value_type;
-        typedef const value_type const_reference;
+        typedef value_type const_reference;
         typedef typename Cst::size_type size_type;
         typedef cst_dfs_const_forward_iterator<Cst> iterator;
         typedef typename Cst::node_type node_type;
@@ -181,7 +181,7 @@ class cst_bottom_up_const_forward_iterator: public std::iterator<std::forward_it
 {
     public:
         typedef typename Cst::node_type value_type;
-        typedef const value_type const_reference;
+        typedef value_type const_reference;
         typedef typename Cst::size_type size_type;
         typedef cst_bottom_up_const_forward_iterator<Cst> iterator;
     private:
@@ -255,7 +255,7 @@ class cst_bfs_iterator: public std::iterator<std::forward_iterator_tag, typename
 {
     public:
         typedef typename Cst::node_type 		value_type;
-        typedef const value_type 				const_reference;
+        typedef value_type 				const_reference;
         typedef typename Cst::size_type 		size_type;
         typedef cst_bfs_iterator<Cst, Queue> 	iterator;
         typedef Queue 							queue_type;
