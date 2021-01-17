@@ -51,11 +51,14 @@ template<class T>
 class cst_byte_test_sada : public ::testing::Test { };
 typedef Types<cst_sada<>> sadaBPImpl;
 TYPED_TEST_CASE(cst_byte_test_sada, sadaBPImpl);
-TYPED_TEST(cst_byte_test_sada, create_and_store)
+TYPED_TEST(cst_byte_test_sada, level_anc)
 {
     TypeParam cst;
+    cache_config config(false, temp_dir, util::basename(test_file));
+    construct(cst, test_file, config, 1);
+    util::delete_all_files(config.file_map);
+
     typedef typename TypeParam::node_type node_t;
-    ASSERT_TRUE(load_from_file(cst, temp_file));
 	for(const node_t& node : cst) {
 		node_t ancestor = node;
 		size_t level = 0;
