@@ -89,7 +89,7 @@ class csa_wt
         typedef uint64_t                                           value_type;
         typedef random_access_const_iterator<csa_wt>               const_iterator;
         typedef const_iterator                                     iterator;
-        typedef const value_type                                   const_reference;
+        typedef value_type                                         const_reference;
         typedef const_reference                                    reference;
         typedef const_reference*                                   pointer;
         typedef const pointer                                      const_pointer;

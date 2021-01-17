@@ -66,8 +66,6 @@ struct pc_node {
 
     pc_node(uint64_t freq=0, uint64_t sym=0, uint64_t parent=undef,
             uint64_t child_left=undef, uint64_t child_right=undef);
-
-    pc_node& operator=(const pc_node& v);
 };
 
 template<class t_tree_strat_fat>

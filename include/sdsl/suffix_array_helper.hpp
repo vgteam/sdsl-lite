@@ -404,7 +404,7 @@ template<typename t_csa>
 class bwt_of_csa_wt
 {
     public:
-        typedef const typename t_csa::char_type value_type;
+        typedef typename t_csa::char_type value_type;
         typedef typename t_csa::size_type size_type;
         typedef typename t_csa::char_type char_type;
         typedef typename t_csa::difference_type difference_type;
@@ -593,7 +593,7 @@ template<typename t_csa>
 class first_row_of_csa
 {
     public:
-        typedef const typename t_csa::char_type value_type;
+        typedef typename t_csa::char_type value_type;
         typedef typename t_csa::size_type size_type;
         typedef typename t_csa::difference_type difference_type;
         typedef random_access_const_iterator<first_row_of_csa> const_iterator;

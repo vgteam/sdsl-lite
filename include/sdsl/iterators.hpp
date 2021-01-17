@@ -33,7 +33,7 @@ template<class t_rac>
 class random_access_const_iterator: public std::iterator<std::random_access_iterator_tag, typename t_rac::value_type, typename t_rac::difference_type>
 {
     public:
-        typedef const typename t_rac::value_type  const_reference;
+        typedef typename t_rac::value_type  const_reference;
         typedef typename t_rac::size_type size_type;
         typedef random_access_const_iterator<t_rac> iterator;
         typedef typename t_rac::difference_type difference_type;

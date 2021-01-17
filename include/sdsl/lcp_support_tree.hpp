@@ -28,7 +28,7 @@ class _lcp_support_tree
         typedef typename t_lcp::value_type                      value_type;
         typedef random_access_const_iterator<_lcp_support_tree> const_iterator;
         typedef const_iterator                                  iterator;
-        typedef const value_type                                const_reference;
+        typedef value_type                                      const_reference;
         typedef const_reference                                 reference;
         typedef const_reference*                                pointer;
         typedef const pointer                                   const_pointer;
