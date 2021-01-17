@@ -11,9 +11,11 @@ As [SDSL 2](https://github.com/simongog/sdsl-lite) is no longer maintained, vgte
 - [ ] [GBWT](https://github.com/jltsiren/gbwt)
 - [ ] [GBWTGraph](https://github.com/jltsiren/gbwtgraph)
 - [ ] [GCSA2](https://github.com/jltsiren/gcsa2)
+- [ ] [libbdsg](https://github.com/vgteam/libbdsg)
+- [ ] [XG](https://github.com/vgteam/xg)
 
 ## Initial changes
 
 - [x] Switch to C++14.
-- [ ] Get rid of compiler warnings.
+- [x] Get rid of compiler warnings.
 - [ ] Import `sd_vector` iterator from GBWT.

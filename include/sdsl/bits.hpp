@@ -206,11 +206,17 @@ struct bits {
     //! Reads a value from a bit position in an array.
     static uint64_t read_int(const uint64_t* word, uint8_t offset=0, const uint8_t len=64);
 
+    //! Reads a value from a bit position in a word.
+    static uint64_t read_int_from_word(uint64_t word, uint8_t offset=0, const uint8_t len=64);
+
     //! Reads a value from a bit position in an array and moved the bit-pointer.
     static uint64_t read_int_and_move(const uint64_t*& word, uint8_t& offset, const uint8_t len=64);
 
     //! Reads an unary decoded value from a bit position in an array.
     static uint64_t read_unary(const uint64_t* word, uint8_t offset=0);
+
+    //! Reads an unary decoded value from a bit position in a word.
+    static uint64_t read_unary_from_word(uint64_t word, uint8_t offset=0);
 
     //! Reads an unary decoded value from a bit position in an array and moves the bit-pointer.
     static uint64_t read_unary_and_move(const uint64_t*& word, uint8_t& offset);
@@ -510,6 +516,10 @@ inline uint64_t bits::read_int(const uint64_t* word, uint8_t offset, const uint8
     }
 }
 
+inline uint64_t bits::read_int_from_word(uint64_t word, uint8_t offset, uint8_t len) {
+    return (word >> offset) & bits::lo_set[len];
+}
+
 inline uint64_t bits::read_int_and_move(const uint64_t*& word, uint8_t& offset, const uint8_t len)
 {
     uint64_t w1 = (*word)>>offset;
@@ -542,6 +552,10 @@ inline uint64_t bits::read_unary(const uint64_t* word, uint8_t offset)
         return bits::lo(w)+(cnt<<6)-offset;
     }
     return 0;
+}
+
+inline uint64_t bits::read_unary_from_word(uint64_t word, uint8_t offset) {
+    return bits::lo(word >> offset);
 }
 
 inline uint64_t bits::read_unary_and_move(const uint64_t*& word, uint8_t& offset)
