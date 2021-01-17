@@ -14,6 +14,6 @@ As [SDSL 2](https://github.com/simongog/sdsl-lite) is no longer maintained, vgte
 
 ## Initial changes
 
-- [ ] Switch to C++14.
+- [x] Switch to C++14.
 - [ ] Get rid of compiler warnings.
 - [ ] Import `sd_vector` iterator from GBWT.
