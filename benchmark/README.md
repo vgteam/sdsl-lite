@@ -53,7 +53,7 @@ Accepted for publication in Software, Practice and Experience.
 Simon Gog (simon.gog@gmail.com)
 
 [sdsl]: https://github.com/simongog/sdsl "sdsl"
-[pz]: http://pizzachili.di.unipi.it "Pizza&Chili"
+[pz]: http://pizzachili.dcc.uchile.cl/ "Pizza&Chili"
 [PP]: http://people.eng.unimelb.edu.au/sgog/optimized.pdf "Preprint"
 [CURL]: http://curl.haxx.se/ "cURL"
 [GZIP]: http://www.gnu.org/software/gzip/ "Gzip Compressor"

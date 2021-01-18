@@ -76,7 +76,7 @@ and test cases from the [Pizza&Chili][pz] website.
 	  Specify which indexes should be listed in the report. 
 
 [sdsl]: https://github.com/simongog/sdsl "sdsl"
-[pz]: http://pizzachili.di.unipi.it "Pizza&Chili"
+[pz]: http://pizzachili.dcc.uchile.cl/ "Pizza&Chili"
 [RPJ]: http://www.r-project.org/ "R"
 [LT]: http://www.tug.org/applications/pdftex/ "pdflatex"
 [RES]: https://github.com/simongog/simongog.github.com/raw/master/assets/images/count.pdf "count.pdf"
