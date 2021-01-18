@@ -456,7 +456,7 @@ class bwt_of_csa_wt
          */
         size_type select(size_type i, const char_type c)const
         {
-            return m_csa.select(i, c);
+            return m_csa.select_bwt(i, c);
         }
 
 
