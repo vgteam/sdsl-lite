@@ -256,7 +256,6 @@ void select_support_mcl<t_b,t_pat_len>::init_slow(const bit_vector* v)
     }
 }
 
-// TODO: find bug, detected by valgrind
 template<uint8_t t_b, uint8_t t_pat_len>
 void select_support_mcl<t_b,t_pat_len>::init_fast(const bit_vector* v)
 {
@@ -272,7 +271,6 @@ void select_support_mcl<t_b,t_pat_len>::init_fast(const bit_vector* v)
     if (m_arg_cnt==0) // if there are no arguments in the vector we are done...
         return;
 
-//    size_type sb = (m_arg_cnt+63+SUPER_BLOCK_SIZE-1)/SUPER_BLOCK_SIZE; // number of superblocks, add 63 as the last block could contain 63 uninitialized bits
     size_type sb = (m_arg_cnt+SUPER_BLOCK_SIZE-1)/SUPER_BLOCK_SIZE; // number of superblocks
     delete [] m_miniblock;
     m_miniblock = new int_vector<0>[sb];
@@ -285,6 +283,7 @@ void select_support_mcl<t_b,t_pat_len>::init_fast(const bit_vector* v)
     size_type last_k64 = 1, sb_cnt=0;
     for (size_type i=0, cnt_old=0, cnt_new=0, last_k64_sum=1; i < v->capacity(); i+=64, ++data) {
         cnt_new += select_support_trait<t_b, t_pat_len>::args_in_the_word(*data, carry_new);
+        cnt_new = std::min(cnt_new, m_arg_cnt); // For (0, 0), we may find nonexistent args in the padding after the bitvector.
         if (cnt_new >= last_k64_sum) {
             arg_position[last_k64-1] = i + select_support_trait<t_b, t_pat_len>::ith_arg_pos_in_the_word(*data, last_k64_sum  - cnt_old, carry_new);
             last_k64 += 64;
@@ -294,7 +293,7 @@ void select_support_mcl<t_b,t_pat_len>::init_fast(const bit_vector* v)
                 m_superblock[sb_cnt] = arg_position[0];
                 size_type pos_of_last_arg_in_the_block = arg_position[last_k64-65];
 
-                for (size_type ii=arg_position[last_k64-65]+1, j=last_k64-65; ii < v->size() and j < SUPER_BLOCK_SIZE; ++ii)
+                for (size_type ii=arg_position[last_k64-65]+1, j=last_k64-65; ii < v->size() && j < SUPER_BLOCK_SIZE; ++ii)
                     if (select_support_trait<t_b,t_pat_len>::found_arg(ii, *v)) {
                         pos_of_last_arg_in_the_block = ii;
                         ++j;
@@ -304,17 +303,8 @@ void select_support_mcl<t_b,t_pat_len>::init_fast(const bit_vector* v)
                     if (m_longsuperblock == nullptr) m_longsuperblock = new int_vector<0>[sb+1]; // create longsuperblock
                     // GEANDERT am 2010-07-17 +1 nach pos_of_last_arg..
                     m_longsuperblock[sb_cnt] = int_vector<0>(SUPER_BLOCK_SIZE, 0, bits::hi(pos_of_last_arg_in_the_block) + 1);
-                    for (size_type j=arg_position[0], k=0; k < SUPER_BLOCK_SIZE and j <= pos_of_last_arg_in_the_block; ++j)
+                    for (size_type j=arg_position[0], k=0; k < SUPER_BLOCK_SIZE && j <= pos_of_last_arg_in_the_block; ++j)
                         if (select_support_trait<t_b, t_pat_len>::found_arg(j, *v)) {
-                            if (k>=SUPER_BLOCK_SIZE) {
-                                for (size_type ii=0; ii < SUPER_BLOCK_SIZE; ++ii) {
-                                    std::cout<<"("<<ii<<","<<m_longsuperblock[sb_cnt][ii]<<") ";
-                                }
-                                std::cout << std::endl;
-                                std::cout<<"k="<<k<<" SUPER_BLOCK_SIZE="<<SUPER_BLOCK_SIZE<<std::endl;
-                                std::cout<<"pos_of_last_arg_in_the_block"<< pos_of_last_arg_in_the_block<<std::endl;
-                                std::cout.flush();
-                            }
                             m_longsuperblock[sb_cnt][k++] = j;
                         }
                 } else {
