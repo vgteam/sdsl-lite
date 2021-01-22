@@ -8,9 +8,9 @@ As [SDSL 2](https://github.com/simongog/sdsl-lite) is no longer maintained, vgte
 ## Tools/libraries using this fork
 
 - [ ] [VG](https://github.com/vgteam/vg)
-- [ ] [GBWT](https://github.com/jltsiren/gbwt)
-- [ ] [GBWTGraph](https://github.com/jltsiren/gbwtgraph)
-- [ ] [GCSA2](https://github.com/jltsiren/gcsa2)
+- [x] [GBWT](https://github.com/jltsiren/gbwt)
+- [x] [GBWTGraph](https://github.com/jltsiren/gbwtgraph)
+- [x] [GCSA2](https://github.com/jltsiren/gcsa2)
 - [ ] [libbdsg](https://github.com/vgteam/libbdsg)
 - [ ] [XG](https://github.com/vgteam/xg)
 
