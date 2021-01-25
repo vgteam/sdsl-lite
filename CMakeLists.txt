@@ -27,10 +27,7 @@ option(CODE_COVERAGE "Set ON to add code coverage compile options" OFF)
 option(GENERATE_DOC "Set ON to generate doxygen API reference in build/doc directory" OFF)
 
 # C++14 compiler Check
-if(NOT CMAKE_CXX_COMPILER_VERSION) # work around for cmake versions smaller than 2.8.10
-    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE CMAKE_CXX_COMPILER_VERSION)
-endif()
-if(CMAKE_CXX_COMPILER MATCHES ".*clang.*" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+if(CMAKE_CXX_COMPILER MATCHES ".*clang.*" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
       set(CMAKE_COMPILER_IS_CLANGXX 1)
 endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
