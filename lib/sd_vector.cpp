@@ -19,21 +19,35 @@ sd_vector_builder::sd_vector_builder(size_type n, size_type m) :
     m_tail(0), m_items(0),
     m_last_high(0), m_highpos(0)
 {
-    if(m_capacity > m_size)
-    {
+    if (m_capacity > m_size) {
         throw std::runtime_error("sd_vector_builder: requested capacity is larger than vector size.");
     }
 
     size_type logm = bits::hi(m_capacity) + 1;
     const size_type logn = bits::hi(m_size) + 1;
-    if(logm == logn)
-    {
+    if(logm == logn) {
         --logm; // to ensure logn-logm > 0
         assert(logn - logm > 0);
     }
     m_wl = logn - logm;
     m_low = int_vector<>(m_capacity, 0, m_wl);
     m_high = bit_vector(m_capacity + (1ULL << logm), 0);
+}
+
+void
+sd_vector_builder::set_safe(size_type i)
+{
+    if (m_items >= m_capacity) {
+        throw std::runtime_error("sd_vector_builder::set(): the builder is already full.");
+    }
+    if (i < m_tail) {
+        throw std::runtime_error("sd_vector_builder::set(): the position is too small.");
+    }
+    if (i >= m_size) {
+        throw std::runtime_error("sd_vector_builder::set(): the position is too large.");
+    }
+
+    this->set(i);
 }
 
 void
@@ -53,9 +67,8 @@ sd_vector_builder::swap(sd_vector_builder& sdb)
 template<>
 sd_vector<>::sd_vector(sd_vector_builder& builder)
 {
-    if(builder.items() != builder.capacity())
-    {
-      throw std::runtime_error("sd_vector: the builder is not full.");
+    if(builder.items() != builder.capacity()) {
+      throw std::runtime_error("sd_vector: the builder is not at full capacity.");
     }
 
     m_size = builder.m_size;

@@ -15,10 +15,7 @@ class sd_vector_test : public ::testing::Test { };
 
 using testing::Types;
 
-typedef Types<
-sd_vector<>,
-          sd_vector<rrr_vector<63>>
-          > Implementations;
+typedef Types< sd_vector<>, sd_vector<rrr_vector<63>> > Implementations;
 
 TYPED_TEST_CASE(sd_vector_test, Implementations);
 
@@ -72,6 +69,32 @@ TYPED_TEST(sd_vector_test, builder_empty_constructor)
     TypeParam sdv(builder);
     for (size_t i=0; i < BV_SIZE; ++i) {
         ASSERT_FALSE((bool)sdv[i]);
+    }
+}
+
+TYPED_TEST(sd_vector_test, builder_exceptions)
+{
+    {
+        // Too many ones.
+        ASSERT_THROW(sd_vector_builder(1024, 1025), std::runtime_error);
+    }
+    {
+        // Position is too small.
+        sd_vector_builder builder(1024, 3);
+        builder.set(128);
+        ASSERT_THROW(builder.set_safe(128), std::runtime_error);
+    }
+    {
+        // Position is too large.
+        sd_vector_builder builder(1024, 3);
+        ASSERT_THROW(builder.set_safe(1024), std::runtime_error);
+    }
+    {
+        // Not full.
+        sd_vector_builder builder(1024, 3);
+        builder.set(128);
+        builder.set(256);
+        ASSERT_THROW(TypeParam{builder}, std::runtime_error);
     }
 }
 
