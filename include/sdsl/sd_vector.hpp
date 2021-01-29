@@ -51,7 +51,7 @@ template<typename, typename, typename>
 class sd_vector;  // in sd_vector
 
 //! Class for in-place construction of sd_vector from a strictly increasing sequence
-/*! \par Building an sd_vector will clear the builder.
+/*! \par Building an `sd_vector` will clear the builder.
  */
 class sd_vector_builder
 {
@@ -76,29 +76,47 @@ class sd_vector_builder
         //! Constructor
         /*! \param n Vector size.
          *  \param m The number of 1-bits.
+         *  \par Throws `std::runtime_error` if `m > n`.
          */
         sd_vector_builder(size_type n, size_type m);
 
-        inline size_type size() const { return m_size; }
-        inline size_type capacity() const { return m_capacity; }
-        inline size_type tail() const { return m_tail; }
-        inline size_type items() const { return m_items; }
+        size_type size() const { return m_size; }
+        size_type capacity() const { return m_capacity; }
+        size_type tail() const { return m_tail; }
+        size_type items() const { return m_items; }
 
         //! Set a bit to 1.
         /*! \param i The position of the bit.
          *  \par The position must be strictly greater than for the previous call.
+         *  Behavior is undefined if the position is out of range or the vector is full.
          */
-        inline void set(size_type i)
+        void set_unsafe(size_type i) noexcept
         {
-            assert(i >= m_tail && i < m_size);
-            assert(m_items < m_capacity);
-
             size_type cur_high = i >> m_wl;
             m_highpos += (cur_high - m_last_high);
             m_last_high = cur_high;
             m_low[m_items++] = i; // int_vector truncates the most significant logm bits
             m_high[m_highpos++] = 1;  // write 1 for the entry
             m_tail = i + 1;
+        }
+
+        //! Set a bit to 1.
+        /*! \param i The position of the bit.
+         *  \par The position must be strictly greater than for the previous call.
+         *  Throws `std::runtime_error` if the position is out of range or the vector is full.
+         */
+        void set(size_type i)
+        {
+            if (m_items >= m_capacity) {
+                throw std::runtime_error("sd_vector_builder::set(): the builder is already full.");
+            }
+            if (i < m_tail) {
+                throw std::runtime_error("sd_vector_builder::set(): the position is too small.");
+            }
+            if (i >= m_size) {
+                throw std::runtime_error("sd_vector_builder::set(): the position is too large.");
+            }
+            this->set_unsafe(i);
         }
 
         //! Swap method
@@ -110,7 +128,7 @@ class sd_vector_builder
 /*!
  * \par Other implementations of this data structure:
  *  - the sdarray of Okanohara and Sadakane
- *  - Sebastiano Vigna implemented a elias_fano class in this sux library.
+ *  - Sebastiano Vigna implemented a elias_fano class in the sux library.
  *
  * \par References
  *  - P. Elias: ,,Efficient storage and retrieval by content and address of static files'',
@@ -265,6 +283,11 @@ class sd_vector
             util::init_support(m_high_0_select, &m_high);
         }
 
+        //! Transforms the `sd_vector_builder` into `sd_vector`.
+        /*!
+         *  \par Empties the builder.
+         *  Throws `std::runtime_error` if the builder is not full.
+         */
         sd_vector(sd_vector_builder& builder)
         {
             if (builder.items() != builder.capacity()) {
