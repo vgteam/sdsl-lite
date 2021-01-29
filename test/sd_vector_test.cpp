@@ -82,12 +82,12 @@ TYPED_TEST(sd_vector_test, builder_exceptions)
         // Position is too small.
         sd_vector_builder builder(1024, 3);
         builder.set(128);
-        ASSERT_THROW(builder.set_safe(128), std::runtime_error);
+        ASSERT_THROW(builder.set(128), std::runtime_error);
     }
     {
         // Position is too large.
         sd_vector_builder builder(1024, 3);
-        ASSERT_THROW(builder.set_safe(1024), std::runtime_error);
+        ASSERT_THROW(builder.set(1024), std::runtime_error);
     }
     {
         // Not full.

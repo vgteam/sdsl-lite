@@ -90,7 +90,7 @@ class sd_vector_builder
          *  \par The position must be strictly greater than for the previous call.
          *  Behavior is undefined if the position is out of range or the vector is full.
          */
-        void set(size_type i) noexcept
+        void set_unsafe(size_type i) noexcept
         {
             size_type cur_high = i >> m_wl;
             m_highpos += (cur_high - m_last_high);
@@ -105,7 +105,19 @@ class sd_vector_builder
          *  \par The position must be strictly greater than for the previous call.
          *  Throws `std::runtime_error` if the position is out of range or the vector is full.
          */
-        void set_safe(size_type i);
+        void set(size_type i)
+        {
+            if (m_items >= m_capacity) {
+                throw std::runtime_error("sd_vector_builder::set(): the builder is already full.");
+            }
+            if (i < m_tail) {
+                throw std::runtime_error("sd_vector_builder::set(): the position is too small.");
+            }
+            if (i >= m_size) {
+                throw std::runtime_error("sd_vector_builder::set(): the position is too large.");
+            }
+            this->set_unsafe(i);
+        }
 
         //! Swap method
         void swap(sd_vector_builder& sdb);

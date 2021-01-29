@@ -35,22 +35,6 @@ sd_vector_builder::sd_vector_builder(size_type n, size_type m) :
 }
 
 void
-sd_vector_builder::set_safe(size_type i)
-{
-    if (m_items >= m_capacity) {
-        throw std::runtime_error("sd_vector_builder::set(): the builder is already full.");
-    }
-    if (i < m_tail) {
-        throw std::runtime_error("sd_vector_builder::set(): the position is too small.");
-    }
-    if (i >= m_size) {
-        throw std::runtime_error("sd_vector_builder::set(): the position is too large.");
-    }
-
-    this->set(i);
-}
-
-void
 sd_vector_builder::swap(sd_vector_builder& sdb)
 {
     std::swap(m_size, sdb.m_size);
