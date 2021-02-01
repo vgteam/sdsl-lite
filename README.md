@@ -8,7 +8,7 @@ As [SDSL 2](https://github.com/simongog/sdsl-lite) is no longer maintained, vgte
 ## Major changes
 
 - [x] Switch to C++14.
-- [ ] Import `sd_vector` iterator from GBWT.
+- [x] `sd_vector` improvements: iterator over set bits and support for predecessor/successor queries.
 
 ## Tools/libraries using this fork
 
