@@ -1,6 +1,7 @@
 /* sdsl - succinct data structures library
     Copyright (C) 2012-2014 Simon Gog
     Copyright (C) 2015 Genome Research Ltd.
+    Copyright (C) 2021 Jouni Siren
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,6 +33,8 @@
 namespace sdsl
 {
 
+//-----------------------------------------------------------------------------
+
 // forward declaration needed for friend declaration
 template<uint8_t t_b          = 1,
          class t_hi_bit_vector= bit_vector,
@@ -48,7 +51,9 @@ class select_support_sd;  // in sd_vector
 
 // forward declaration needed for friend declaration
 template<typename, typename, typename>
-class sd_vector;  // in sd_vector
+class sd_vector;
+
+//-----------------------------------------------------------------------------
 
 //! Class for in-place construction of sd_vector from a strictly increasing sequence
 /*! \par Building an `sd_vector` will clear the builder.
@@ -123,6 +128,109 @@ class sd_vector_builder
         void swap(sd_vector_builder& sdb);
 };
 
+//-----------------------------------------------------------------------------
+
+//! An a bidirectional iterator over the set bits in `sd_vector`.
+/*!
+ * \par The `value_type` has semantics `(rank(i), i)` or `(i, select(i + 1))`.
+ */
+template<class t_hi_bit_vector, class t_select_1, class t_select_0>
+class sd_one_iterator
+{
+    public:
+        typedef sd_vector<t_hi_bit_vector, t_select_1, t_select_0>     vector_type;
+        typedef typename vector_type::size_type                        size_type;
+        typedef std::pair<size_type, typename vector_type::value_type> value_type;
+        typedef typename vector_type::difference_type                  difference_type;
+        typedef const value_type*                                      pointer;
+        typedef const value_type&                                      reference;
+        typedef std::bidirectional_iterator_tag                        iterator_category;
+
+        sd_one_iterator() : parent(nullptr), low_offset(0), high_offset(0), value(0, 0) {}
+
+        //! Primary constructor.
+        /*!
+         * \param parent The parent bitvector.
+         * \param offset Offset in the parent bitvector.
+         * \param low_offset Offset in `parent->low`; also `rank(offset)`.
+         * \param high_offset Offset in `parent->high`.
+         */
+        sd_one_iterator(const vector_type* parent, size_type offset, size_type low_offset, size_type high_offset) :
+            parent(parent), low_offset(low_offset), high_offset(high_offset),
+            value(low_offset, offset)
+        {
+        }
+
+        bool operator==(const sd_one_iterator& another) const
+        {
+            return (this->low_offset == another.low_offset);
+        }
+
+        bool operator!=(const sd_one_iterator& another) const
+        {
+            return (this->low_offset != another.low_offset);
+        }
+
+        //! Returns the current value.
+        /*!
+         * \par The value is `(rank(i), i)` or `(i, select(i + 1))`.
+         */
+        reference operator*() const { return this->value; }
+
+        //! Returns a pointer to the current value.
+        /*!
+         * \par The value is `(rank(i), i)` or `(i, select(i + 1))`.
+         */
+        pointer operator->() const { return &(this->value); }
+
+        sd_one_iterator& operator++()
+        {
+            this->low_offset++;
+            if (this->low_offset != this->parent->ones()) {
+                do { this->high_offset++; }
+                while (!this->parent->high[this->high_offset]);
+                this->set_value();
+            }
+            return *this;
+        }
+
+        sd_one_iterator& operator++(int)
+        {
+            sd_one_iterator result = *this;
+            ++(*this);
+            return result;
+        }
+
+        sd_one_iterator& operator--()
+        {
+            this->low_offset--;
+            do { this->high_offset--; }
+            while (!this->parent->high[this->high_offset]);
+            this->set_value();
+            return *this;
+        }
+
+        sd_one_iterator& operator--(int)
+        {
+            sd_one_iterator result = *this;
+            --(*this);
+            return result;
+        }
+
+    private:
+        const vector_type* parent;
+        size_type low_offset, high_offset;
+        value_type value;
+
+        void set_value()
+        {
+            this->value.first = this->low_offset;
+            this->value.second = this->parent->combine(this->low_offset, this->high_offset);
+        }
+};
+
+//-----------------------------------------------------------------------------
+
 //! A bit vector which compresses very sparse populated bit vectors by
 // representing the positions of 1 by the Elias-Fano representation for non-decreasing sequences
 /*!
@@ -148,6 +256,8 @@ template<class t_hi_bit_vector = bit_vector,
          class t_select_0     = typename t_hi_bit_vector::select_0_type>
 class sd_vector
 {
+    friend class sd_one_iterator<t_hi_bit_vector, t_select_1, t_select_0>;
+
     public:
         typedef bit_vector::size_type                   size_type;
         typedef size_type                               value_type;
@@ -163,7 +273,10 @@ class sd_vector
         typedef select_support_sd<0, t_hi_bit_vector, select_1_support_type, select_0_support_type> select_0_type;
         typedef select_support_sd<1, t_hi_bit_vector, select_1_support_type, select_0_support_type> select_1_type;
 
+        typedef sd_one_iterator<t_hi_bit_vector, select_1_support_type, select_0_support_type> one_iterator;
+
         typedef t_hi_bit_vector hi_bit_vector_type;
+
     private:
         // we need this variables to represent the m ones of the original bit vector of size n
         size_type m_size = 0;  // length of the original bit vector
@@ -187,6 +300,8 @@ class sd_vector
             m_high_0_select = v.m_high_0_select;
             m_high_0_select.set_vector(&m_high);
         }
+
+//-----------------------------------------------------------------------------
 
     public:
         const uint8_t&               wl            = m_wl;
@@ -304,6 +419,8 @@ class sd_vector
             builder = sd_vector_builder();
         }
 
+//-----------------------------------------------------------------------------
+
         //! Accessing the i-th element of the original bit_vector
         /*! \param i An index i with \f$ 0 \leq i < size()  \f$.
         *   \return The i-th bit of the original bit_vector
@@ -381,6 +498,8 @@ class sd_vector
             }
         }
 
+//-----------------------------------------------------------------------------
+
         //! Swap method
         void swap(sd_vector& v)
         {
@@ -395,9 +514,15 @@ class sd_vector
         }
 
         //! Returns the size of the original bit vector.
-        size_type size()const
+        size_type size() const
         {
             return m_size;
+        }
+
+        //! Returns the number of set bits in the bitvector.
+        size_type ones() const
+        {
+            return m_low.size();
         }
 
         sd_vector& operator=(const sd_vector& v)
@@ -449,6 +574,8 @@ class sd_vector
             m_high_0_select.load(in, &m_high);
         }
 
+//-----------------------------------------------------------------------------
+
         iterator begin() const
         {
             return iterator(this, 0);
@@ -458,10 +585,115 @@ class sd_vector
         {
             return iterator(this, size());
         }
+
+        one_iterator one_begin() const
+        {
+            size_type offset = 0, high_offset = 0;
+            if (this->ones() > 0)
+            {
+                while (!this->high[high_offset]) { high_offset++; }
+                offset = this->combine(0, high_offset);
+            }
+            return one_iterator(this, offset, 0, high_offset);
+        }
+
+        one_iterator one_end() const
+        {
+            return one_iterator(this, this->size(), this->ones(), this->high.size());
+        }
+
+        //! Returns an iterator at the set bit of the specified rank in the bitvector.
+        /*!
+         * \param i One-based rank in the bitvector.
+         * \par The returned iterator will have value `(i - 1, select(i))`.
+         * Returns `one_end()` if no such bit exists.
+         */
+        one_iterator select_iter(size_type i) const
+        {
+            if (i == 0 || i > this->ones()) { return this->one_end(); }
+
+            size_type high_offset = this->high_1_select(i);
+            return one_iterator(this, this->combine(i - 1, high_offset), i - 1, high_offset);
+        }
+
+        //! Returns an iterator to the last set bit at or before the argument.
+        /*!
+         * \param i Offset in the bitvector.
+         * \par Returns `one_end()` if no such bit exists.
+         */
+        one_iterator predecessor(size_type i) const
+        {
+            if (this->ones() == 0) { return this->one_end(); }
+            i = std::min(i, this->size() - 1);
+
+            // Find the 0 in `high` that follows all the values with the same `high_part`.
+            size_type high_part = i >> this->wl;
+            size_type low_part = i & bits::lo_set[this->wl];
+            size_type high_offset = this->high_0_select(high_part + 1);
+            size_type low_offset = high_offset - high_part;
+            if (low_offset == 0) { return this->one_end(); }
+
+            // Iterate backward over the values sharing the same `high_part` until we
+            // find the predecessor or run out of such values.
+            high_offset--; low_offset--;
+            while (this->high[high_offset] && this->low[low_offset] > low_part) {
+                if (low_offset == 0) { return this->one_end(); }
+                high_offset--; low_offset--;
+            }
+
+            // The predecessor could also have a lower `high_part`.
+            while (!this->high[high_offset]) { high_offset--; }
+
+            return one_iterator(this, this->combine(low_offset, high_offset), low_offset, high_offset);
+        }
+
+        //! Returns an iterator to the first set bit at or after the argument.
+        /*!
+         * \param i Offset in the bitvector.
+         * \par Returns `one_end()` if no such bit exists.
+         */
+        one_iterator successor(size_type i) const
+        {
+            if (i >= this->size()) { return this->one_end(); }
+
+            // Find the offset in `high` that follows the 0 preceding the values with the same `high_part`.
+            size_type high_part = i >> this->wl;
+            size_type low_part = i & bits::lo_set[this->wl];
+            size_type high_offset = (high_part == 0 ? 0 : this->high_0_select(high_part) + 1);
+            size_type low_offset = high_offset - high_part;
+
+            // Iterate over the values sharing the same `low_part` until we find the successor
+            // or run out of such values.
+            while (high_offset < this->high.size() && this->high[high_offset]) {
+                if (this->low[low_offset] >= low_part) {
+                    return one_iterator(this, this->combine(low_offset, high_offset), low_offset, high_offset);
+                }
+                high_offset++; low_offset++;
+            }
+
+            // The successor has a greater `high_part`, so we continue iterating until we find it.
+            while (high_offset < this->high.size()) {
+                if (this->high[high_offset]) {
+                    return one_iterator(this, this->combine(low_offset, high_offset), low_offset, high_offset);
+                }
+                high_offset++;
+            }
+
+            return this->one_end();
+        }
+
+    private:
+        // Combine `low_offset` and `high_offset` into bitvector offset.
+        size_type combine(size_type low_offset, size_type high_offset) const
+        {
+            return this->low[low_offset] + ((high_offset - low_offset) << this->wl);
+        }
 };
 
 //! Specialized constructor that is a bit more space-efficient than the default.
 template<> sd_vector<>::sd_vector(sd_vector_builder& builder);
+
+//-----------------------------------------------------------------------------
 
 template<uint8_t t_b>
 struct rank_support_sd_trait {
@@ -563,6 +795,8 @@ class rank_support_sd
             return serialize_empty_object(out, v, name, this);
         }
 };
+
+//-----------------------------------------------------------------------------
 
 template<uint8_t t_b, class t_sd_vec>
 struct select_support_sd_trait {
@@ -668,7 +902,6 @@ class select_support_sd
             return serialize_empty_object(out, v, name, this);
         }
 };
-
 
 //! Select_0 data structure for sd_vector
 /*! \tparam t_sd_vector sd_vector type
@@ -853,6 +1086,7 @@ class select_0_support_sd
 
 };
 
+//-----------------------------------------------------------------------------
 
 } // end namespace
 #endif
