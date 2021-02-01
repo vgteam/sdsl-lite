@@ -1,6 +1,7 @@
 /* sdsl - succinct data structures library
     Copyright (C) 2012-2014 Simon Gog
     Copyright (C) 2015 Genome Research Ltd.
+    Copyright (C) 2021 Jouni Siren
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,6 +33,8 @@
 namespace sdsl
 {
 
+//-----------------------------------------------------------------------------
+
 // forward declaration needed for friend declaration
 template<uint8_t t_b          = 1,
          class t_hi_bit_vector= bit_vector,
@@ -49,6 +52,8 @@ class select_support_sd;  // in sd_vector
 // forward declaration needed for friend declaration
 template<typename, typename, typename>
 class sd_vector;  // in sd_vector
+
+//-----------------------------------------------------------------------------
 
 //! Class for in-place construction of sd_vector from a strictly increasing sequence
 /*! \par Building an `sd_vector` will clear the builder.
@@ -123,6 +128,8 @@ class sd_vector_builder
         void swap(sd_vector_builder& sdb);
 };
 
+//-----------------------------------------------------------------------------
+
 //! A bit vector which compresses very sparse populated bit vectors by
 // representing the positions of 1 by the Elias-Fano representation for non-decreasing sequences
 /*!
@@ -164,6 +171,7 @@ class sd_vector
         typedef select_support_sd<1, t_hi_bit_vector, select_1_support_type, select_0_support_type> select_1_type;
 
         typedef t_hi_bit_vector hi_bit_vector_type;
+
     private:
         // we need this variables to represent the m ones of the original bit vector of size n
         size_type m_size = 0;  // length of the original bit vector
@@ -187,6 +195,8 @@ class sd_vector
             m_high_0_select = v.m_high_0_select;
             m_high_0_select.set_vector(&m_high);
         }
+
+//-----------------------------------------------------------------------------
 
     public:
         const uint8_t&               wl            = m_wl;
@@ -304,6 +314,8 @@ class sd_vector
             builder = sd_vector_builder();
         }
 
+//-----------------------------------------------------------------------------
+
         //! Accessing the i-th element of the original bit_vector
         /*! \param i An index i with \f$ 0 \leq i < size()  \f$.
         *   \return The i-th bit of the original bit_vector
@@ -381,6 +393,8 @@ class sd_vector
             }
         }
 
+//-----------------------------------------------------------------------------
+
         //! Swap method
         void swap(sd_vector& v)
         {
@@ -395,9 +409,15 @@ class sd_vector
         }
 
         //! Returns the size of the original bit vector.
-        size_type size()const
+        size_type size() const
         {
             return m_size;
+        }
+
+        //! Returns the number of set bits in the bitvector.
+        size_type ones() const
+        {
+            return m_low.size();
         }
 
         sd_vector& operator=(const sd_vector& v)
@@ -462,6 +482,8 @@ class sd_vector
 
 //! Specialized constructor that is a bit more space-efficient than the default.
 template<> sd_vector<>::sd_vector(sd_vector_builder& builder);
+
+//-----------------------------------------------------------------------------
 
 template<uint8_t t_b>
 struct rank_support_sd_trait {
@@ -563,6 +585,8 @@ class rank_support_sd
             return serialize_empty_object(out, v, name, this);
         }
 };
+
+//-----------------------------------------------------------------------------
 
 template<uint8_t t_b, class t_sd_vec>
 struct select_support_sd_trait {
@@ -668,7 +692,6 @@ class select_support_sd
             return serialize_empty_object(out, v, name, this);
         }
 };
-
 
 //! Select_0 data structure for sd_vector
 /*! \tparam t_sd_vector sd_vector type
@@ -853,6 +876,7 @@ class select_0_support_sd
 
 };
 
+//-----------------------------------------------------------------------------
 
 } // end namespace
 #endif

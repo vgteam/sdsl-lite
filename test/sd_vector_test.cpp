@@ -26,13 +26,17 @@ TYPED_TEST(sd_vector_test, iterator_constructor)
     std::mt19937_64 rng;
     std::uniform_int_distribution<uint64_t> distribution(0, 9);
     auto dice = bind(distribution, rng);
+    size_t ones = 0;
     for (size_t i=0; i < bv.size(); ++i) {
         if (0 == dice()) {
             pos.emplace_back(i);
             bv[i] = 1;
+            ones++;
         }
     }
     TypeParam sdv(pos.begin(),pos.end());
+
+    ASSERT_EQ(sdv.ones(), ones);
     for (size_t i=0; i < bv.size(); ++i) {
         ASSERT_EQ((bool)sdv[i],(bool)bv[i]);
     }
@@ -53,11 +57,15 @@ TYPED_TEST(sd_vector_test, builder_constructor)
             ones++;
         }
     }
+
     sd_vector_builder builder(BV_SIZE, ones);
     for (auto i : pos) {
         builder.set(i);
     }
     TypeParam sdv(builder);
+
+    ASSERT_EQ(sdv.size(), BV_SIZE);
+    ASSERT_EQ(sdv.ones(), ones);
     for (size_t i=0; i < bv.size(); ++i) {
         ASSERT_EQ((bool)sdv[i],(bool)bv[i]);
     }
@@ -67,6 +75,9 @@ TYPED_TEST(sd_vector_test, builder_empty_constructor)
 {
     sd_vector_builder builder(BV_SIZE, 0UL);
     TypeParam sdv(builder);
+
+    ASSERT_EQ(sdv.size(), BV_SIZE);
+    ASSERT_EQ(sdv.ones(), size_t(0));
     for (size_t i=0; i < BV_SIZE; ++i) {
         ASSERT_FALSE((bool)sdv[i]);
     }
