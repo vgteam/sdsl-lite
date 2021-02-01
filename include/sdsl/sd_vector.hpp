@@ -51,7 +51,7 @@ class select_support_sd;  // in sd_vector
 
 // forward declaration needed for friend declaration
 template<typename, typename, typename>
-class sd_vector;  // in sd_vector
+class sd_vector;
 
 //-----------------------------------------------------------------------------
 
@@ -130,6 +130,108 @@ class sd_vector_builder
 
 //-----------------------------------------------------------------------------
 
+//! An a bidirectional iterator over the set bits in `sd_vector`.
+/*!
+ * \par The `value_type` has semantics `(rank(i), i)` or `(i, select(i + 1))`.
+ */
+template<class t_hi_bit_vector, class t_select_1, class t_select_0>
+class sd_one_iterator
+{
+    public:
+        typedef sd_vector<t_hi_bit_vector, t_select_1, t_select_0>     vector_type;
+        typedef typename vector_type::size_type                        size_type;
+        typedef std::pair<size_type, typename vector_type::value_type> value_type;
+        typedef typename vector_type::difference_type                  difference_type;
+        typedef const value_type*                                      pointer;
+        typedef const value_type&                                      reference;
+        typedef std::bidirectional_iterator_tag                        iterator_category;
+
+        sd_one_iterator() : parent(nullptr), low_offset(0), high_offset(0), value(0, 0) {}
+
+        //! Primary constructor.
+        /*!
+         * \param parent The parent bitvector.
+         * \param offset Offset in the parent bitvector.
+         * \param low_offset Offset in `parent->low`; also `rank(offset)`.
+         * \param high_offset Offset in `parent->high`.
+         */
+        sd_one_iterator(const vector_type* parent, size_type offset, size_type low_offset, size_type high_offset) :
+            parent(parent), low_offset(low_offset), high_offset(high_offset),
+            value(low_offset, offset)
+        {
+        }
+
+        bool operator==(const sd_one_iterator& another) const
+        {
+            return (this->low_offset == another.low_offset);
+        }
+
+        bool operator!=(const sd_one_iterator& another) const
+        {
+            return (this->low_offset != another.low_offset);
+        }
+
+        //! Returns the current value.
+        /*!
+         * \par The value is `(rank(i), i)` or `(i, select(i + 1))`.
+         */
+        reference operator*() const { return this->value; }
+
+        //! Returns a pointer to the current value.
+        /*!
+         * \par The value is `(rank(i), i)` or `(i, select(i + 1))`.
+         */
+        pointer operator->() const { return &(this->value); }
+
+        sd_one_iterator& operator++()
+        {
+            this->low_offset++;
+            if (this->low_offset != this->parent->ones())
+            {
+                do { this->high_offset++; }
+                while (!this->parent->high[this->high_offset]);
+                this->set_value();
+            }
+            return *this;
+        }
+
+        sd_one_iterator& operator++(int)
+        {
+            sd_one_iterator result = *this;
+            ++(*this);
+            return result;
+        }
+
+        sd_one_iterator& operator--()
+        {
+            this->low_offset--;
+            do { this->high_offset--; }
+            while (!this->parent->high[this->high_offset]);
+            this->set_value();
+            return *this;
+        }
+
+        sd_one_iterator& operator--(int)
+        {
+            sd_one_iterator result = *this;
+            --(*this);
+            return result;
+        }
+
+    private:
+        const vector_type* parent;
+        size_type low_offset, high_offset;
+        value_type value;
+
+        void set_value()
+        {
+            this->value.first = this->low_offset;
+            this->value.second = this->parent->low[this->low_offset] + ((this->high_offset - this->low_offset) << this->parent->wl);
+        }
+};
+
+//-----------------------------------------------------------------------------
+
 //! A bit vector which compresses very sparse populated bit vectors by
 // representing the positions of 1 by the Elias-Fano representation for non-decreasing sequences
 /*!
@@ -169,6 +271,8 @@ class sd_vector
         typedef rank_support_sd<1, t_hi_bit_vector, select_1_support_type, select_0_support_type> rank_1_type;
         typedef select_support_sd<0, t_hi_bit_vector, select_1_support_type, select_0_support_type> select_0_type;
         typedef select_support_sd<1, t_hi_bit_vector, select_1_support_type, select_0_support_type> select_1_type;
+
+        typedef sd_one_iterator<t_hi_bit_vector, select_1_support_type, select_0_support_type> one_iterator;
 
         typedef t_hi_bit_vector hi_bit_vector_type;
 
@@ -469,6 +573,8 @@ class sd_vector
             m_high_0_select.load(in, &m_high);
         }
 
+//-----------------------------------------------------------------------------
+
         iterator begin() const
         {
             return iterator(this, 0);
@@ -477,6 +583,22 @@ class sd_vector
         iterator end() const
         {
             return iterator(this, size());
+        }
+
+        one_iterator one_begin() const
+        {
+            size_type offset = 0, high_offset = 0;
+            if (this->ones() > 0)
+            {
+                while (!this->high[high_offset]) { high_offset++; }
+                offset = this->low[0] + (high_offset << this->wl);
+            }
+            return one_iterator(this, offset, 0, high_offset);
+        }
+
+        one_iterator one_end() const
+        {
+            return one_iterator(this, this->size(), this->ones(), this->high.size());
         }
 };
 
