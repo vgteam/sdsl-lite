@@ -186,8 +186,7 @@ class sd_one_iterator
         sd_one_iterator& operator++()
         {
             this->low_offset++;
-            if (this->low_offset != this->parent->ones())
-            {
+            if (this->low_offset != this->parent->ones()) {
                 do { this->high_offset++; }
                 while (!this->parent->high[this->high_offset]);
                 this->set_value();
@@ -226,7 +225,7 @@ class sd_one_iterator
         void set_value()
         {
             this->value.first = this->low_offset;
-            this->value.second = this->parent->low[this->low_offset] + ((this->high_offset - this->low_offset) << this->parent->wl);
+            this->value.second = this->parent->combine(this->low_offset, this->high_offset);
         }
 };
 
@@ -257,6 +256,8 @@ template<class t_hi_bit_vector = bit_vector,
          class t_select_0     = typename t_hi_bit_vector::select_0_type>
 class sd_vector
 {
+    friend class sd_one_iterator<t_hi_bit_vector, t_select_1, t_select_0>;
+
     public:
         typedef bit_vector::size_type                   size_type;
         typedef size_type                               value_type;
@@ -591,7 +592,7 @@ class sd_vector
             if (this->ones() > 0)
             {
                 while (!this->high[high_offset]) { high_offset++; }
-                offset = this->low[0] + (high_offset << this->wl);
+                offset = this->combine(0, high_offset);
             }
             return one_iterator(this, offset, 0, high_offset);
         }
@@ -599,6 +600,79 @@ class sd_vector
         one_iterator one_end() const
         {
             return one_iterator(this, this->size(), this->ones(), this->high.size());
+        }
+
+        //! Returns an iterator to the last set bit at or before the argument.
+        /*!
+         * \param i Offset in the bitvector.
+         * \par Returns `one_end()` if no such bit exists.
+         */
+        one_iterator predecessor(size_type i) const
+        {
+            if (this->ones() == 0) { return this->one_end(); }
+            i = std::min(i, this->size() - 1);
+
+            // Find the 0 in `high` that follows all the values with the same `high_part`.
+            size_type high_part = i >> this->wl;
+            size_type low_part = i & bits::lo_set[this->wl];
+            size_type high_offset = this->high_0_select(high_part + 1);
+            size_type low_offset = high_offset - high_part;
+            if (low_offset == 0) { return this->one_end(); }
+
+            // Iterate backward over the values sharing the same `high_part` until we
+            // find the predecessor or run out of such values.
+            high_offset--; low_offset--;
+            while (this->high[high_offset] && this->low[low_offset] > low_part) {
+                if (low_offset == 0) { return this->one_end(); }
+                high_offset--; low_offset--;
+            }
+
+            // The predecessor could also have a lower `high_part`.
+            while (!this->high[high_offset]) { high_offset--; }
+
+            return one_iterator(this, this->combine(low_offset, high_offset), low_offset, high_offset);
+        }
+
+        //! Returns an iterator to the first set bit at or after the argument.
+        /*!
+         * \param i Offset in the bitvector.
+         * \par Returns `one_end()` if no such bit exists.
+         */
+        one_iterator successor(size_type i) const
+        {
+            if (i >= this->size()) { return this->one_end(); }
+
+            // Find the offset in `high` that follows the 0 preceding the values with the same `high_part`.
+            size_type high_part = i >> this->wl;
+            size_type low_part = i & bits::lo_set[this->wl];
+            size_type high_offset = (high_part == 0 ? 0 : this->high_0_select(high_part) + 1);
+            size_type low_offset = high_offset - high_part;
+
+            // Iterate over the values sharing the same `low_part` until we find the successor
+            // or run out of such values.
+            while (high_offset < this->high.size() && this->high[high_offset]) {
+                if (this->low[low_offset] >= low_part) {
+                    return one_iterator(this, this->combine(low_offset, high_offset), low_offset, high_offset);
+                }
+                high_offset++; low_offset++;
+            }
+
+            // The successor has a greater `high_part`, so we continue iterating until we find it.
+            while (high_offset < this->high.size()) {
+                if (this->high[high_offset]) {
+                    return one_iterator(this, this->combine(low_offset, high_offset), low_offset, high_offset);
+                }
+                high_offset++;
+            }
+
+            return this->one_end();
+        }
+
+    private:
+        // Combine `low_offset` and `high_offset` into bitvector offset.
+        size_type combine(size_type low_offset, size_type high_offset) const
+        {
+            return this->low[low_offset] + ((high_offset - low_offset) << this->wl);
         }
 };
 
