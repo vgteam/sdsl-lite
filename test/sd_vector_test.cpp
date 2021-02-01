@@ -100,6 +100,15 @@ TYPED_TEST(sd_vector_test, one_iterator)
     }
     ASSERT_EQ(expected, size_t(0));
 
+    // Iterator-based select.
+    ASSERT_EQ(sdv.select_iter(0), sdv.one_end());
+    for (size_t i = 0; i < sdv.ones(); i++) {
+        auto iter = sdv.select_iter(i + 1);
+        ASSERT_EQ(iter->first, i);
+        ASSERT_EQ(iter->second, pos[i]);
+    }
+    ASSERT_EQ(sdv.select_iter(sdv.ones() + 1), sdv.one_end());
+
     // Predecessor.
     pos.push_back(sdv.size());
     size_t start = 0;
@@ -143,6 +152,8 @@ TYPED_TEST(sd_vector_test, empty_builder)
     }
 
     ASSERT_EQ(sdv.one_begin(), sdv.one_end());
+    ASSERT_EQ(sdv.select_iter(0), sdv.one_end());
+    ASSERT_EQ(sdv.select_iter(1), sdv.one_end());
     ASSERT_EQ(sdv.predecessor(sdv.size()), sdv.one_end());
     ASSERT_EQ(sdv.successor(0), sdv.one_end());
 }
@@ -151,7 +162,9 @@ TYPED_TEST(sd_vector_test, empty_one_iterator)
 {
     TypeParam sdv;
     ASSERT_EQ(sdv.one_begin(), sdv.one_end());
-    ASSERT_EQ(sdv.predecessor(0), sdv.one_end());
+    ASSERT_EQ(sdv.select_iter(0), sdv.one_end());
+    ASSERT_EQ(sdv.select_iter(1), sdv.one_end());
+    ASSERT_EQ(sdv.predecessor(sdv.size()), sdv.one_end());
     ASSERT_EQ(sdv.successor(0), sdv.one_end());
 }
 

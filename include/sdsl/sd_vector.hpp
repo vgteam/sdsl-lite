@@ -602,6 +602,20 @@ class sd_vector
             return one_iterator(this, this->size(), this->ones(), this->high.size());
         }
 
+        //! Returns an iterator at the set bit of the specified rank in the bitvector.
+        /*!
+         * \param i One-based rank in the bitvector.
+         * \par The returned iterator will have value `(i - 1, select(i))`.
+         * Returns `one_end()` if no such bit exists.
+         */
+        one_iterator select_iter(size_type i) const
+        {
+            if (i == 0 || i > this->ones()) { return this->one_end(); }
+
+            size_type high_offset = this->high_1_select(i);
+            return one_iterator(this, this->combine(i - 1, high_offset), i - 1, high_offset);
+        }
+
         //! Returns an iterator to the last set bit at or before the argument.
         /*!
          * \param i Offset in the bitvector.
