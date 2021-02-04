@@ -22,6 +22,9 @@ class rank_support_rle;
 template<uint64_t t_block_size = 64>
 class select_support_rle;
 
+template<uint64_t t_block_size = 64>
+class rle_vector;
+
 //-----------------------------------------------------------------------------
 
 //! A growable bit-packed integer array that consists of fixed-size blocks.
@@ -62,7 +65,7 @@ class block_array
 
         //! Adds a new block to the array.
         void add_block() {
-            this->data.resize(this->data.size() + (8 * t_block_bytes / t_element_bits), 0);
+            this->data.resize(this->data.size() + (t_block_bytes / sizeof(value_type)), 0);
         }
 
         //! Serializes the data structure into the given ostream.
@@ -108,7 +111,7 @@ class block_array
 
 //-----------------------------------------------------------------------------
 
-// TODO: Common interface with sd_vector_builder; use as rle_vector::builder_type?
+// TODO: Common interface with sd_vector_builder?
 //! Class for in-place construction of rle_vector from a strictly increasing sequence.
 /*!
  * \tparam t_block_size Number of elements in a block. Must be a multiple of 32.
@@ -186,9 +189,10 @@ class rle_vector_builder
         }
 
     private:
-        template<typename> friend class rle_vector;
+        template<uint64_t> friend class rle_vector;
 
         void add_block() {
+            this->body_tail = this->body.size();
             this->body.add_block();
             this->block_bits.push_back(this->total_bits);
             this->block_ones.push_back(this->set_bits);
@@ -235,9 +239,6 @@ class rle_vector_builder
             this->write(this->run_length - 1);
             this->total_bits += this->run_length;
             this->set_bits += this->run_length;
-
-            this->run_start = this->total_bits;
-            this->run_length = 0;
         }
 
         // Finish the construction. Further bits cannot be set after this.
@@ -265,7 +266,7 @@ class rle_vector_builder
  * 
  * \tparam t_block_size Number of elements in a block. Must be a multiple of 32.
 */
-template<uint64_t t_block_size = 64>
+template<uint64_t t_block_size>
 class rle_vector
 {
     // Definitions.
@@ -281,6 +282,8 @@ class rle_vector
         typedef rank_support_rle<0, t_block_size>        rank_0_type;
         typedef rank_support_rle<1, t_block_size>        rank_1_type;
         typedef select_support_rle<t_block_size>         select_1_type;
+
+        typedef rle_vector_builder<t_block_size>         builder_type;
 
     private:
         block_array<t_block_size / 2, 4> body;
@@ -357,7 +360,7 @@ class rle_vector
         //! Create a run-length encoded copy of the source bitvector.
         rle_vector(const bit_vector& source)
         {
-            rle_vector_builder<t_block_size> builder(source.size());
+            builder_type builder(source.size());
             for (size_type i = 0; i < source.size(); i++) {
                 if (source[i]) { builder.set_unsafe(i); }
             }
@@ -368,18 +371,18 @@ class rle_vector
         /*!
          * \par Construction clears the builder.
          */
-        rle_vector(rle_vector_builder<t_block_size>& builder)
+        rle_vector(builder_type& builder)
         {
             builder.flush();
             this->body = std::move(builder.body);
 
-            {
+            if (builder.total_bits > 0) {
                 sd_vector_builder bits_builder(builder.total_bits, builder.block_bits.size());
                 for (auto pos : builder.block_bits) { bits_builder.set_unsafe(pos); }
                 this->block_bits = sd_vector<>(bits_builder);
             }
 
-            {
+            if (builder.set_bits > 0) {
                 sd_vector_builder ones_builder(builder.set_bits, builder.block_ones.size());
                 for (auto pos : builder.block_ones) { ones_builder.set_unsafe(pos); }
                 this->block_ones = sd_vector<>(ones_builder);
@@ -421,27 +424,32 @@ class rle_vector
             if (i >= this->size()) { return 0; }
             len = std::min(len, this->size() - i);
 
-            auto sample = *(this->block_bits.predecessor(i));
-            size_type body_offset = sample.first * t_block_size;
-            size_type bv_offset = sample.second;
+            auto iter = this->block_bits.predecessor(i);
+            size_type bv_offset = iter->second;
             uint64_t value = 0;
 
-            // Skip unused bits.
-            while (true) {
-                bv_offset += this->run_length(body_offset); // Run of 0s.
-                if (bv_offset >= i) { break; }
-                bv_offset += this->run_length(body_offset) + 1; // Run of 1s.
-                if (bv_offset >= i) { value = bits::lo_set[std::min(bv_offset - i, len)]; break; }
-            }
+            // Process all the necessary blocks.
+            while (bv_offset < i + len) {
+                size_type body_offset = iter->first * t_block_size;
+                ++iter;
+                bool need_next_block = (iter != this->block_bits.one_end() && iter->second < i + len);
+                size_type block_limit = (need_next_block ? iter->second : i + len);
 
-            // Read the actual bits.
-            while (true) {
-                bv_offset += this->run_length(body_offset); // Run of 0s.
-                if (bv_offset >= i + len) { break; }
-                size_type one_run = std::min(this->run_length(body_offset) + 1, i + len - bv_offset); // Run of 1s.
-                value |= bits::lo_set[one_run] << (bv_offset - i);
-                bv_offset += one_run;
-                if (bv_offset >= i + len) { break; }
+                // Process the current block.
+                while (true) {
+                    bv_offset += this->run_length(body_offset); // Run of 0s.
+                    if (bv_offset >= block_limit) { break; }
+                    size_type one_run = this->run_length(body_offset) + 1; // Run of 1s.
+                    if (bv_offset + one_run > i) {
+                        if (bv_offset < i) {
+                            value = bits::lo_set[std::min(one_run - (i - bv_offset), len)];
+                        } else {
+                            value|= bits::lo_set[std::min(one_run, block_limit - bv_offset)] << (bv_offset - i);
+                        }
+                    }
+                    bv_offset += one_run;
+                    if (bv_offset >= block_limit) { break; }
+                }
             }
 
             return value;
@@ -487,7 +495,7 @@ class rle_vector
         {
             size_type offset = 0;
             size_type result = this->body[i] & DATA_MASK;
-            while (this->body[i] & NEXT_ELEM != 0) {
+            while ((this->body[i] & NEXT_ELEM) != 0) {
                 i++; offset += DATA_BITS;
                 result += (this->body[i] & DATA_MASK) << offset;
             }
