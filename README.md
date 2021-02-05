@@ -9,6 +9,8 @@ As [SDSL 2](https://github.com/simongog/sdsl-lite) is no longer maintained, vgte
 
 - [x] Switch to C++14.
 - [x] `sd_vector` improvements: iterator over set bits and support for predecessor/successor queries.
+- [x] `rle_vector`: a run-length encoded bitvector.
+
 
 ## Tools/libraries using this fork
 

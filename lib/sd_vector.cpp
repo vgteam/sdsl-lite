@@ -23,8 +23,8 @@ sd_vector_builder::sd_vector_builder(size_type n, size_type m) :
         throw std::runtime_error("sd_vector_builder: requested capacity is larger than vector size.");
     }
 
-    size_type logm = bits::hi(m_capacity) + 1;
-    const size_type logn = bits::hi(m_size) + 1;
+    size_type logm = bits::length(m_capacity);
+    const size_type logn = bits::length(m_size);
     if(logm == logn) {
         --logm; // to ensure logn-logm > 0
         assert(logn - logm > 0);
@@ -49,7 +49,7 @@ sd_vector_builder::swap(sd_vector_builder& sdb)
 }
 
 template<>
-sd_vector<>::sd_vector(sd_vector_builder& builder)
+sd_vector<>::sd_vector(builder_type& builder)
 {
     if(builder.items() != builder.capacity()) {
       throw std::runtime_error("sd_vector: the builder is not at full capacity.");
@@ -62,7 +62,7 @@ sd_vector<>::sd_vector(sd_vector_builder& builder)
     util::init_support(m_high_1_select, &m_high);
     util::init_support(m_high_0_select, &m_high);
 
-    builder = sd_vector_builder();
+    builder = builder_type();
 }
 
 } // end namespace

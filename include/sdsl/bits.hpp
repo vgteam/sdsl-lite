@@ -125,6 +125,9 @@ struct bits {
     */
     static uint32_t lo(uint64_t x);
 
+    //! Length of the binary encoding of integer x.
+    static uint32_t length(uint64_t x) { return hi(x) + 1; };
+
     //! Counts the number of 1-bits in the 32bit integer x.
     /*! This function is a variant of the method cnt. If
     	32bit multiplication is fast, this method beats the cnt.

@@ -35,34 +35,30 @@ namespace sdsl
 
 //-----------------------------------------------------------------------------
 
-// forward declaration needed for friend declaration
+// Forward declarations.
+
 template<uint8_t t_b          = 1,
          class t_hi_bit_vector= bit_vector,
          class t_select_1     = typename t_hi_bit_vector::select_1_type,
          class t_select_0     = typename t_hi_bit_vector::select_0_type>
-class rank_support_sd;  // in sd_vector
+class rank_support_sd;
 
-// forward declaration needed for friend declaration
 template<uint8_t t_b          = 1,
          class t_hi_bit_vector= bit_vector,
          class t_select_1     = typename t_hi_bit_vector::select_1_type,
          class t_select_0     = typename t_hi_bit_vector::select_0_type>
-class select_support_sd;  // in sd_vector
+class select_support_sd;
 
-// forward declaration needed for friend declaration
 template<typename, typename, typename>
 class sd_vector;
 
 //-----------------------------------------------------------------------------
 
-//! Class for in-place construction of sd_vector from a strictly increasing sequence
+//! Class for in-place construction of sd_vector from a strictly increasing sequence.
 /*! \par Building an `sd_vector` will clear the builder.
  */
 class sd_vector_builder
 {
-        template<typename, typename, typename>
-        friend class sd_vector;
-
     public:
         typedef bit_vector::size_type size_type;
 
@@ -74,6 +70,8 @@ class sd_vector_builder
 
         int_vector<> m_low;
         bit_vector   m_high;
+
+        template<typename, typename, typename> friend class sd_vector;
 
     public:
         sd_vector_builder();
@@ -90,7 +88,7 @@ class sd_vector_builder
         size_type tail() const { return m_tail; }
         size_type items() const { return m_items; }
 
-        //! Set a bit to 1.
+        //! Sets a bit to 1.
         /*! \param i The position of the bit.
          *  \par The position must be strictly greater than for the previous call.
          *  Behavior is undefined if the position is out of range or the vector is full.
@@ -105,7 +103,7 @@ class sd_vector_builder
             m_tail = i + 1;
         }
 
-        //! Set a bit to 1.
+        //! Sets a bit to 1.
         /*! \param i The position of the bit.
          *  \par The position must be strictly greater than for the previous call.
          *  Throws `std::runtime_error` if the position is out of range or the vector is full.
@@ -124,15 +122,16 @@ class sd_vector_builder
             this->set_unsafe(i);
         }
 
-        //! Swap method
+        //! Swap method.
         void swap(sd_vector_builder& sdb);
 };
 
 //-----------------------------------------------------------------------------
 
-//! An a bidirectional iterator over the set bits in `sd_vector`.
+//! A bidirectional iterator over the set bits in `sd_vector`.
 /*!
  * \par The `value_type` has semantics `(rank(i), i)` or `(i, select(i + 1))`.
+ * Dereferencing an iterator at the end yields `(ones(), size())`.
  */
 template<class t_hi_bit_vector, class t_select_1, class t_select_0>
 class sd_one_iterator
@@ -190,6 +189,9 @@ class sd_one_iterator
                 do { this->high_offset++; }
                 while (!this->parent->high[this->high_offset]);
                 this->set_value();
+            } else {
+                this->value.first = this->low_offset;
+                this->value.second = this->parent->size();
             }
             return *this;
         }
@@ -273,6 +275,8 @@ class sd_vector
         typedef select_support_sd<0, t_hi_bit_vector, select_1_support_type, select_0_support_type> select_0_type;
         typedef select_support_sd<1, t_hi_bit_vector, select_1_support_type, select_0_support_type> select_1_type;
 
+        typedef sd_vector_builder builder_type;
+
         typedef sd_one_iterator<t_hi_bit_vector, select_1_support_type, select_0_support_type> one_iterator;
 
         typedef t_hi_bit_vector hi_bit_vector_type;
@@ -326,8 +330,8 @@ class sd_vector
         {
             m_size = bv.size();
             size_type m = util::cnt_one_bits(bv);
-            uint8_t logm = bits::hi(m)+1;
-            uint8_t logn = bits::hi(m_size)+1;
+            uint8_t logm = bits::length(m);
+            uint8_t logn = bits::length(m_size);
             if (logm == logn) {
                 --logm;    // to ensure logn-logm > 0
             }
@@ -371,8 +375,8 @@ class sd_vector
             }
             size_type m = std::distance(begin,end);
             m_size = *(end-1)+1;
-            uint8_t logm = bits::hi(m)+1;
-            uint8_t logn = bits::hi(m_size)+1;
+            uint8_t logm = bits::length(m);
+            uint8_t logn = bits::length(m_size);
             if (logm == logn) {
                 --logm;    // to ensure logn-logm > 0
             }
@@ -403,7 +407,7 @@ class sd_vector
          *  \par Empties the builder.
          *  Throws `std::runtime_error` if the builder is not full.
          */
-        sd_vector(sd_vector_builder& builder)
+        sd_vector(builder_type& builder)
         {
             if (builder.items() != builder.capacity()) {
                 throw std::runtime_error("sd_vector: builder is not at full capacity.");
@@ -416,7 +420,7 @@ class sd_vector
             util::init_support(m_high_1_select, &(this->m_high));
             util::init_support(m_high_0_select, &(this->m_high));
 
-            builder = sd_vector_builder();
+            builder = builder_type();
         }
 
 //-----------------------------------------------------------------------------
@@ -691,7 +695,7 @@ class sd_vector
 };
 
 //! Specialized constructor that is a bit more space-efficient than the default.
-template<> sd_vector<>::sd_vector(sd_vector_builder& builder);
+template<> sd_vector<>::sd_vector(builder_type& builder);
 
 //-----------------------------------------------------------------------------
 
@@ -933,8 +937,8 @@ class select_0_support_sd
                 size_type z = 0;
                 size_type rank1 = 0;// rank1 in H
                 size_type zeros = m_v->size() - rank_1(m_v)(m_v->size()); // zeros in B
-                m_pointer = int_vector<>(zeros/(64*bs)+1, 0, bits::hi(m_v->high.size()/64)+1);
-                m_rank1   = int_vector<>(m_pointer.size(), 0, bits::hi(m_v->high.size())+1);
+                m_pointer = int_vector<>(zeros/(64*bs)+1, 0, bits::length(m_v->high.size()/64));
+                m_rank1   = int_vector<>(m_pointer.size(), 0, bits::length(m_v->high.size()));
                 uint64_t w=0;
                 for (size_type i=0, sel0=1; i < m_v->high.size(); i+=64) {
                     size_type old_rank1 = rank1;
