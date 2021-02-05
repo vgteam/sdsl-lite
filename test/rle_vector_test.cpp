@@ -103,7 +103,20 @@ TYPED_TEST(rle_vector_test, from_builder)
     }
 }
 
-// FIXME construction with builder
+TYPED_TEST(rle_vector_test, builder_exceptions)
+{
+    {
+        // Position is too small.
+        typename TypeParam::builder_type builder(1024);
+        builder.set(128);
+        ASSERT_THROW(builder.set(128), std::runtime_error);
+    }
+    {
+        // Position is too large.
+        typename TypeParam::builder_type builder(1024);
+        ASSERT_THROW(builder.set(1024), std::runtime_error);
+    }
+}
 
 } // end namespace
 

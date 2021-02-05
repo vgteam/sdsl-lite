@@ -54,7 +54,6 @@ class sd_vector;
 
 //-----------------------------------------------------------------------------
 
-// TODO: Common interface with rle_vector_builder; use as sd_vector::builder_type?
 //! Class for in-place construction of sd_vector from a strictly increasing sequence.
 /*! \par Building an `sd_vector` will clear the builder.
  */
@@ -272,6 +271,8 @@ class sd_vector
         typedef select_support_sd<0, t_hi_bit_vector, select_1_support_type, select_0_support_type> select_0_type;
         typedef select_support_sd<1, t_hi_bit_vector, select_1_support_type, select_0_support_type> select_1_type;
 
+        typedef sd_vector_builder builder_type;
+
         typedef sd_one_iterator<t_hi_bit_vector, select_1_support_type, select_0_support_type> one_iterator;
 
         typedef t_hi_bit_vector hi_bit_vector_type;
@@ -402,7 +403,7 @@ class sd_vector
          *  \par Empties the builder.
          *  Throws `std::runtime_error` if the builder is not full.
          */
-        sd_vector(sd_vector_builder& builder)
+        sd_vector(builder_type& builder)
         {
             if (builder.items() != builder.capacity()) {
                 throw std::runtime_error("sd_vector: builder is not at full capacity.");
@@ -415,7 +416,7 @@ class sd_vector
             util::init_support(m_high_1_select, &(this->m_high));
             util::init_support(m_high_0_select, &(this->m_high));
 
-            builder = sd_vector_builder();
+            builder = builder_type();
         }
 
 //-----------------------------------------------------------------------------
@@ -690,7 +691,7 @@ class sd_vector
 };
 
 //! Specialized constructor that is a bit more space-efficient than the default.
-template<> sd_vector<>::sd_vector(sd_vector_builder& builder);
+template<> sd_vector<>::sd_vector(builder_type& builder);
 
 //-----------------------------------------------------------------------------
 

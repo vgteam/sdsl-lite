@@ -142,7 +142,7 @@ class rle_vector_builder
 
     public:
         //! Creates a builder for a rle_vector of length n.
-        explicit rle_vector_builder(size_type n) :
+        explicit rle_vector_builder(size_type n = 0) :
             run_start(0), run_length(0),
             length(n), total_bits(0), set_bits(0),
             body_tail(0)
@@ -356,7 +356,6 @@ class rle_vector
     // Main constructors.
 
     public:
-
         //! Create a run-length encoded copy of the source bitvector.
         rle_vector(const bit_vector& source)
         {
@@ -387,6 +386,8 @@ class rle_vector
                 for (auto pos : builder.block_ones) { ones_builder.set_unsafe(pos); }
                 this->block_ones = sd_vector<>(ones_builder);
             }
+
+            builder = builder_type();
         }
 
 //-----------------------------------------------------------------------------
@@ -394,7 +395,6 @@ class rle_vector
     // Operations.
 
     public:
-
         //! Returns the i-th element of the bitvector.
         /*! \param i Position in the bitvector.
          */
