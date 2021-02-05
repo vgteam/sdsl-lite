@@ -562,7 +562,7 @@ class rank_support_rle
          */
         size_type rank(size_type i) const
         {
-            if (i >= this->parent->size()) { return this->parent->ones(); }
+            if (i >= this->parent->size()) { return rank_support_rle_trait<t_b>::adjust_rank(this->parent->ones(), this->parent->size()); }
 
             auto sample = *(this->parent->block_bits.predecessor(i));
             size_type body_offset = sample.first * t_block_size;
@@ -629,7 +629,7 @@ class select_support_rle
         size_type select(size_type i) const
         {
             if (i == 0) { return static_cast<size_type>(-1); }
-            if (i >= this->parent->ones()) { return this->parent->size(); }
+            if (i > this->parent->ones()) { return this->parent->size(); }
 
             auto sample = *(this->parent->block_ones.predecessor(i - 1)); // select(i) corresponds to block_ones[i - 1].
             size_type body_offset = sample.first * t_block_size;
