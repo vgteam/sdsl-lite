@@ -45,7 +45,8 @@ typedef Types<select_support_mcl<>,
         select_support_mcl<01,2>,
         select_support_mcl<10,2>,
         select_support_mcl<00,2>,
-        select_support_mcl<11,2>
+        select_support_mcl<11,2>,
+        select_support_rle<>
         > Implementations;
 
 TYPED_TEST_CASE(select_support_test, Implementations);

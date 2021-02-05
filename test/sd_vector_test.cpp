@@ -83,9 +83,11 @@ TYPED_TEST(sd_vector_test, one_iterator)
     TypeParam sdv(builder);
 
     // At end.
-    auto iter = sdv.one_end();
-    ASSERT_EQ(iter->first, sdv.ones());
-    ASSERT_EQ(iter->second, sdv.size());
+    {
+        auto iter = sdv.one_end();
+        ASSERT_EQ(iter->first, sdv.ones());
+        ASSERT_EQ(iter->second, sdv.size());
+    }
 
     // Iterate forward.
     size_t expected = 0;
