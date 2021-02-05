@@ -550,10 +550,12 @@ template<uint8_t t_b, uint64_t t_block_size>
 class rank_support_rle
 {
     public:
-        typedef rle_vector<t_block_size> vector_type;
-        typedef typename vector_type::size_type size_type;
+        typedef rle_vector<t_block_size> bit_vector_type;
+        typedef typename bit_vector_type::size_type size_type;
+        enum { bit_pat = t_b };
+        enum { bit_pat_len = (uint8_t)1 };
 
-        explicit rank_support_rle(const vector_type* v = nullptr) : parent(v) {}
+        explicit rank_support_rle(const bit_vector_type* v = nullptr) : parent(v) {}
 
         //! Returns the number of bits of type t_b before position i.
         /*!
@@ -562,7 +564,7 @@ class rank_support_rle
          */
         size_type rank(size_type i) const
         {
-            if (i >= this->parent->size()) { return this->parent->ones(); }
+            if (i >= this->parent->size()) { return rank_support_rle_trait<t_b>::adjust_rank(this->parent->ones(), this->parent->size()); }
 
             auto sample = *(this->parent->block_bits.predecessor(i));
             size_type body_offset = sample.first * t_block_size;
@@ -579,12 +581,12 @@ class rank_support_rle
                 }
             }
 
-            return rank_support_rle_trait<t_b>::adjust_rank(result, this->parent->size());
+            return rank_support_rle_trait<t_b>::adjust_rank(result, i);
         }
 
         size_type operator()(size_type i) const { return this->rank(i); }
 
-        void set_vector(const vector_type* v = nullptr) { this->parent = v; }
+        void set_vector(const bit_vector_type* v = nullptr) { this->parent = v; }
 
         rank_support_rle& operator=(const rank_support_rle& another)
         {
@@ -594,7 +596,7 @@ class rank_support_rle
 
         void swap(rank_support_rle& another) { std::swap(this->parent, another.parent); }
 
-        void load(std::istream&, const vector_type* v = nullptr) { this->set_vector(v); }
+        void load(std::istream&, const bit_vector_type* v = nullptr) { this->set_vector(v); }
 
         size_type serialize(std::ostream& out, structure_tree_node* v = nullptr, std::string name = "") const
         {
@@ -603,7 +605,7 @@ class rank_support_rle
 
     private:
         static_assert(t_b == 1u or t_b == 0u , "rank_support_rle: bit pattern must be `0` or `1`");
-        const vector_type* parent;
+        const bit_vector_type* parent;
 };
 
 //-----------------------------------------------------------------------------
@@ -616,10 +618,12 @@ template<uint64_t t_block_size>
 class select_support_rle
 {
     public:
-        typedef rle_vector<t_block_size> vector_type;
-        typedef typename vector_type::size_type size_type;
+        typedef rle_vector<t_block_size> bit_vector_type;
+        typedef typename bit_vector_type::size_type size_type;
+        enum { bit_pat = (uint8_t)1 };
+        enum { bit_pat_len = (uint8_t)1 };
 
-        explicit select_support_rle(const vector_type* v = nullptr) : parent(v) {}
+        explicit select_support_rle(const bit_vector_type* v = nullptr) : parent(v) {}
 
         //! Returns the position of the i-th one in the bitvector.
         /*!
@@ -629,7 +633,7 @@ class select_support_rle
         size_type select(size_type i) const
         {
             if (i == 0) { return static_cast<size_type>(-1); }
-            if (i >= this->parent->ones()) { return this->parent->size(); }
+            if (i > this->parent->ones()) { return this->parent->size(); }
 
             auto sample = *(this->parent->block_ones.predecessor(i - 1)); // select(i) corresponds to block_ones[i - 1].
             size_type body_offset = sample.first * t_block_size;
@@ -639,15 +643,15 @@ class select_support_rle
                 bv_offset += this->parent->run_of_zeros(body_offset);
                 size_type one_run = this->parent->run_of_ones(body_offset);
                 bv_offset += one_run; rank += one_run;
-                if (rank > i) {
-                    return bv_offset - (rank - 1 - i);
+                if (rank >= i) {
+                    return bv_offset - 1 - (rank - i);
                 }
             }
         }
 
         size_type operator()(size_type i) const { return this->select(i); }
 
-        void set_vector(const vector_type* v = nullptr) { this->parent = v; }
+        void set_vector(const bit_vector_type* v = nullptr) { this->parent = v; }
 
         select_support_rle& operator=(const select_support_rle& another)
         {
@@ -657,7 +661,7 @@ class select_support_rle
 
         void swap(select_support_rle& another) { std::swap(this->parent, another.parent); }
 
-        void load(std::istream&, const vector_type* v = nullptr) { this->set_vector(v); }
+        void load(std::istream&, const bit_vector_type* v = nullptr) { this->set_vector(v); }
 
         size_type serialize(std::ostream& out, structure_tree_node* v = nullptr, std::string name = "") const
         {
@@ -665,7 +669,7 @@ class select_support_rle
         }
 
     private:
-        const vector_type* parent;
+        const bit_vector_type* parent;
 };
 
 //-----------------------------------------------------------------------------

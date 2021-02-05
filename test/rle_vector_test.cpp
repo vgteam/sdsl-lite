@@ -104,6 +104,26 @@ TYPED_TEST(rle_vector_test, from_builder)
     }
 }
 
+TYPED_TEST(rle_vector_test, special_cases)
+{
+    std::vector<std::pair<uint64_t, uint64_t>> runs = generate_runs(BV_SIZE, 9);
+    typename TypeParam::builder_type builder(BV_SIZE);
+    for (auto run : runs) {
+        builder.set(run.first, run.second);
+    }
+    TypeParam rlv(builder);
+
+    typename TypeParam::rank_1_type rs_1(&rlv);
+    ASSERT_EQ(rs_1(rlv.size()), rlv.ones());
+
+    typename TypeParam::rank_0_type rs_0(&rlv);
+    ASSERT_EQ(rs_0(rlv.size()), rlv.size() - rlv.ones());
+
+    typename TypeParam::select_1_type ss(&rlv);
+    ASSERT_EQ(ss(0), static_cast<typename TypeParam::size_type>(-1));
+    ASSERT_EQ(ss(rlv.ones() + 1), rlv.size());
+}
+
 TYPED_TEST(rle_vector_test, builder_exceptions)
 {
     {
