@@ -16,14 +16,14 @@ namespace sdsl
 
 // Forward declarations.
 
+template<uint64_t t_block_size = 64>
+class rle_vector;
+
 template<uint8_t t_b = 1, uint64_t t_block_size = 64>
 class rank_support_rle;
 
 template<uint64_t t_block_size = 64>
 class select_support_rle;
-
-template<uint64_t t_block_size = 64>
-class rle_vector;
 
 //-----------------------------------------------------------------------------
 
@@ -111,7 +111,6 @@ class block_array
 
 //-----------------------------------------------------------------------------
 
-// TODO: Common interface with sd_vector_builder?
 //! Class for in-place construction of rle_vector from a strictly increasing sequence.
 /*!
  * \tparam t_block_size Number of elements in a block. Must be a multiple of 32.
@@ -406,9 +405,9 @@ class rle_vector
             size_type body_offset = sample.first * t_block_size;
             size_type bv_offset = sample.second;
             while (true) {
-                bv_offset += this->run_length(body_offset); // Run of 0s.
+                bv_offset += this->run_of_zeros(body_offset);
                 if (bv_offset > i) { return 0; }
-                bv_offset += this->run_length(body_offset) + 1; // Run of 1s.
+                bv_offset += this->run_of_ones(body_offset);
                 if (bv_offset > i) { return 1; }
             }
         }
@@ -437,9 +436,9 @@ class rle_vector
 
                 // Process the current block.
                 while (true) {
-                    bv_offset += this->run_length(body_offset); // Run of 0s.
+                    bv_offset += this->run_of_zeros(body_offset);
                     if (bv_offset >= block_limit) { break; }
-                    size_type one_run = this->run_length(body_offset) + 1; // Run of 1s.
+                    size_type one_run = this->run_of_ones(body_offset);
                     if (bv_offset + one_run > i) {
                         if (bv_offset < i) {
                             value = bits::lo_set[std::min(one_run - (i - bv_offset), len)];
@@ -455,7 +454,7 @@ class rle_vector
             return value;
         }
 
-        // TODO predecessor, successor?
+        // TODO other operations?
 
 //-----------------------------------------------------------------------------
 
@@ -465,15 +464,34 @@ class rle_vector
         iterator begin() const { return iterator(this, 0); }
         iterator end() const { return iterator(this, this->size()); }
 
-        // TODO iterator over runs?
-
         //! Returns the length of the bitvector.
         size_type size() const { return this->block_bits.size(); }
 
         //! Returns the number of ones in the bitvector.
         size_type ones() const { return this->block_ones.size(); }
 
-        // TODO runs()?
+        //! Counts the number of runs of 1s in the bitvector.
+        /*!
+         * \par This call is somewhat expensive, because it has to iterate over the runs.
+         */
+        size_type runs() const
+        {
+            size_type result = 0;
+
+            size_type found_ones = 0;
+            auto iter = this->block_ones.one_begin();
+            while (iter != this->block_ones.one_end()) {
+                size_type body_offset = iter->first * t_block_size;
+                ++iter;
+                while (found_ones < iter->second) {
+                    this->run_of_zeros(body_offset);
+                    found_ones += this->run_of_ones(body_offset);
+                    result++;
+                }
+            }
+
+            return result;
+        }
 
 //-----------------------------------------------------------------------------
 
@@ -481,7 +499,7 @@ class rle_vector
 
     private:
         template<uint8_t, uint64_t> friend class rank_support_rle;
-        template<uint64_t> friend class select_support_rle;
+        friend class select_support_rle<t_block_size>;
 
         void copy(const rle_vector& another)
         {
@@ -491,6 +509,7 @@ class rle_vector
         }
 
         // Returns the (raw) length of the run starting at `body[i]`.
+        // The actual length of a run of 1s is `run_length() + 1`.
         size_type run_length(size_type& i) const
         {
             size_type offset = 0;
@@ -502,6 +521,9 @@ class rle_vector
             i++;
             return result;
         }
+
+        size_type run_of_zeros(size_type& i) const { return this->run_length(i); }
+        size_type run_of_ones(size_type& i) const { return this->run_length(i) + 1; }
 };
 
 //-----------------------------------------------------------------------------
@@ -547,9 +569,9 @@ class rank_support_rle
             size_type bv_offset = sample.second;
             size_type result = this->parent->block_ones.select_iter(sample.first + 1)->second;
             while (true) {
-                bv_offset += this->parent->run_length(body_offset); // Run of 0s.
+                bv_offset += this->parent->run_of_zeros(body_offset);
                 if (bv_offset >= i) { break; }
-                size_type one_run = this->parent->run_length(body_offset) + 1; // Run of 1s.
+                size_type one_run = this->parent->run_of_ones(body_offset);
                 bv_offset += one_run; result += one_run;
                 if (bv_offset >= i) {
                     result -= bv_offset - i;
@@ -614,8 +636,8 @@ class select_support_rle
             size_type bv_offset = this->parent->block_bits.select_iter(sample.first + 1)->second;
             size_type rank = sample.second;
             while (true) {
-                bv_offset += this->parent->run_length(body_offset); // Run of 0s.
-                size_type one_run = this->parent->run_length(body_offset) + 1; // Run of 1s.
+                bv_offset += this->parent->run_of_zeros(body_offset);
+                size_type one_run = this->parent->run_of_ones(body_offset);
                 bv_offset += one_run; rank += one_run;
                 if (rank > i) {
                     return bv_offset - (rank - 1 - i);

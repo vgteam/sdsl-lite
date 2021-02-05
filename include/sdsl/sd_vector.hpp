@@ -128,9 +128,10 @@ class sd_vector_builder
 
 //-----------------------------------------------------------------------------
 
-//! An a bidirectional iterator over the set bits in `sd_vector`.
+//! A bidirectional iterator over the set bits in `sd_vector`.
 /*!
  * \par The `value_type` has semantics `(rank(i), i)` or `(i, select(i + 1))`.
+ * Dereferencing an iterator at the end yields `(ones(), size())`.
  */
 template<class t_hi_bit_vector, class t_select_1, class t_select_0>
 class sd_one_iterator
@@ -188,6 +189,9 @@ class sd_one_iterator
                 do { this->high_offset++; }
                 while (!this->parent->high[this->high_offset]);
                 this->set_value();
+            } else {
+                this->value.first = this->low_offset;
+                this->value.second = this->parent->size();
             }
             return *this;
         }

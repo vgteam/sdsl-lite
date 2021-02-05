@@ -98,6 +98,7 @@ TYPED_TEST(rle_vector_test, from_builder)
 
     ASSERT_EQ(rlv.size(), BV_SIZE);
     ASSERT_EQ(rlv.ones(), ones);
+    ASSERT_EQ(rlv.runs(), runs.size());
     for (size_t i = 0; i < bv.size(); i++) {
         ASSERT_EQ((bool)rlv[i], (bool)bv[i]);
     }
