@@ -250,6 +250,23 @@ class rrr_vector
             }
         }
 
+        //! Equality comparison.
+        bool operator==(const rrr_vector& another) const
+        {
+            return (this->m_size == another.m_size &&
+                    this->m_bt == another.m_bt &&
+                    this->m_btnr == another.m_btnr &&
+                    this->m_btnrp == another.m_btnrp &&
+                    this->m_rank == another.m_rank &&
+                    this->m_invert == another.m_invert);
+        }
+
+        //! Inequality comparison.
+        bool operator!=(const rrr_vector& another) const
+        {
+            return !(this->operator==(another));
+        }
+
         //! Accessing the i-th element of the original bit_vector
         /*! \param i An index i with \f$ 0 \leq i < size()  \f$.
            \return The i-th bit of the original bit_vector

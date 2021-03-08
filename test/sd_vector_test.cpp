@@ -147,6 +147,44 @@ TYPED_TEST(sd_vector_test, one_iterator)
     ASSERT_EQ(sdv.successor(sdv.size()), iter);
 }
 
+TYPED_TEST(sd_vector_test, equality)
+{
+    TypeParam original;
+    {
+        std::vector<uint64_t> pos = generate_positions(BV_SIZE, 9);
+        sd_vector_builder builder(BV_SIZE, pos.size());
+        for (auto i : pos) {
+            builder.set(i);
+        }
+        original = TypeParam(builder);
+    }
+
+    TypeParam copy(original);
+    ASSERT_EQ(copy, original);
+
+    TypeParam sparser;
+    {
+        std::vector<uint64_t> pos = generate_positions(BV_SIZE, 12);
+        sd_vector_builder builder(BV_SIZE, pos.size());
+        for (auto i : pos) {
+            builder.set(i);
+        }
+        sparser = TypeParam(builder);
+    }
+    ASSERT_NE(sparser, original);
+
+    TypeParam shorter;
+    {
+        std::vector<uint64_t> pos = generate_positions(BV_SIZE / 2, 9);
+        sd_vector_builder builder(BV_SIZE / 2, pos.size());
+        for (auto i : pos) {
+            builder.set(i);
+        }
+        shorter = TypeParam(builder);
+    }
+    ASSERT_NE(shorter, original);
+}
+
 TYPED_TEST(sd_vector_test, empty_builder)
 {
     sd_vector_builder builder(BV_SIZE, 0UL);

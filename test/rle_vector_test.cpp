@@ -104,6 +104,44 @@ TYPED_TEST(rle_vector_test, from_builder)
     }
 }
 
+TYPED_TEST(rle_vector_test, equality)
+{
+    TypeParam original;
+    {
+        std::vector<std::pair<uint64_t, uint64_t>> runs = generate_runs(BV_SIZE, 9);
+        typename TypeParam::builder_type builder(BV_SIZE);
+        for (auto run : runs) {
+            builder.set(run.first, run.second);
+        }
+        original = TypeParam(builder);
+    }
+
+    TypeParam copy(original);
+    ASSERT_EQ(copy, original);
+
+    TypeParam longer_runs;
+    {
+        std::vector<std::pair<uint64_t, uint64_t>> runs = generate_runs(BV_SIZE, 12);
+        typename TypeParam::builder_type builder(BV_SIZE);
+        for (auto run : runs) {
+            builder.set(run.first, run.second);
+        }
+        longer_runs = TypeParam(builder);
+    }
+    ASSERT_NE(longer_runs, original);
+
+    TypeParam shorter;
+    {
+        std::vector<std::pair<uint64_t, uint64_t>> runs = generate_runs(BV_SIZE / 2, 9);
+        typename TypeParam::builder_type builder(BV_SIZE / 2);
+        for (auto run : runs) {
+            builder.set(run.first, run.second);
+        }
+        shorter = TypeParam(builder);
+    }
+    ASSERT_NE(shorter, original);
+}
+
 TYPED_TEST(rle_vector_test, special_cases)
 {
     std::vector<std::pair<uint64_t, uint64_t>> runs = generate_runs(BV_SIZE, 9);

@@ -430,8 +430,8 @@ class sd_vector
         *   \return The i-th bit of the original bit_vector
         *   \par Time complexity
         *           \f$ \Order{t_{select0} + n/m} \f$, where m equals the number of zeros
-        *    \par Remark
-         *         The time complexity can be easily improved to
+        *   \par Remark
+        *         The time complexity can be easily improved to
         *            \f$\Order{t_{select0}+\log(n/m)}\f$
         *        by using binary search in the second step.
         */
@@ -550,6 +550,20 @@ class sd_vector
                 m_high_0_select.set_vector(&m_high);
             }
             return *this;
+        }
+
+        //! Equality comparison.
+        /*! \par Two vectors are equal if they encode the same bitvector with the same high/low division.
+         */
+        bool operator==(const sd_vector& another) const
+        {
+            return (this->m_size == another.m_size && this->m_wl == another.m_wl && this->m_low == another.m_low && this->m_high == another.m_high);
+        }
+
+        //! Inequality comparison.
+        bool operator!=(const sd_vector& another) const
+        {
+            return !(this->operator==(another));
         }
 
         //! Serializes the data structure into the given ostream

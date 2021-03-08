@@ -68,6 +68,18 @@ class block_array
             this->data.resize(this->data.size() + (t_block_bytes / sizeof(value_type)), 0);
         }
 
+        //! Equality comparison.
+        bool operator==(const block_array& another) const
+        {
+            return (this->data == another.data);
+        }
+
+        //! Inequality comparison.
+        bool operator!=(const block_array& another) const
+        {
+            return !(this->operator==(another));
+        }
+
         //! Serializes the data structure into the given ostream.
         size_type serialize(std::ostream& out, structure_tree_node* v = nullptr, std::string name = "") const
         {
@@ -328,6 +340,18 @@ class rle_vector
                 this->block_bits.swap(another.block_bits);
                 this->block_ones.swap(another.block_ones);
             }
+        }
+
+        //! Equality comparison.
+        bool operator==(const rle_vector& another) const
+        {
+            return (this->body == another.body && this->block_bits == another.block_bits && this->block_ones == another.block_ones);
+        }
+
+        //! Inequality comparison.
+        bool operator!=(const rle_vector& another) const
+        {
+            return !(this->operator==(another));
         }
 
         //! Serializes the data structure into the given ostream.
