@@ -140,9 +140,10 @@ class sd_vector_builder
 //! A bidirectional iterator over the set bits in `sd_vector`.
 /*!
  * \par The `value_type` has semantics `(rank(i), i)` or `(i, select(i + 1))`.
- * For a multiset, only the latter interpretation is valid, because there may be
- * ranks `i` and `i + 1` such that `select(i + 1) == select(i + 2)`.
- * Dereferencing an iterator at the end yields `(ones(), size())`.
+ * If the vector encodes a multiset of integers, this iterates over the integers
+ * in sorted order. For such vectors, only the latter interpretation is valid.
+ *
+ * \par Dereferencing an iterator at the end yields `(ones(), size())`.
  */
 template<class t_hi_bit_vector, class t_select_1, class t_select_0>
 class sd_one_iterator
