@@ -147,6 +147,41 @@ TYPED_TEST(sd_vector_test, one_iterator)
     ASSERT_EQ(sdv.successor(sdv.size()), iter);
 }
 
+TYPED_TEST(sd_vector_test, multiset)
+{
+    std::vector<uint64_t> pos = { 123, 131, 131, 131, 347, 961 };
+    sd_vector_builder builder(1024, pos.size(), true);
+    for (auto i : pos) {
+        builder.set(i);
+    }
+    TypeParam sdv(builder);
+    TypeParam second(pos.begin(), pos.end());
+
+    // Basic tests.
+    ASSERT_EQ(sdv.ones(), pos.size());
+    ASSERT_EQ(second.ones(), pos.size());
+
+    // Iterate forward.
+    size_t expected = 0;
+    for (auto iter = sdv.one_begin(), second_iter = second.one_begin(); iter != sdv.one_end(); ++iter, ++second_iter) {
+        ASSERT_EQ(iter->first, expected);
+        ASSERT_EQ(iter->second, pos[expected]);
+        ASSERT_EQ(*iter, *second_iter);
+        expected++;
+    }
+    ASSERT_EQ(expected, pos.size());
+
+    // Special cases.
+    auto first_duplicate = sdv.select_iter(2);
+    ASSERT_EQ(first_duplicate->first, uint64_t(1));
+    ASSERT_EQ(first_duplicate->second, uint64_t(131));
+    auto last_duplicate = sdv.select_iter(4);
+    ASSERT_EQ(last_duplicate->first, uint64_t(3));
+    ASSERT_EQ(last_duplicate->second, uint64_t(131));
+    ASSERT_EQ(sdv.predecessor(131), last_duplicate);
+    ASSERT_EQ(sdv.successor(131), first_duplicate);
+}
+
 TYPED_TEST(sd_vector_test, equality)
 {
     TypeParam original;
@@ -219,17 +254,28 @@ TYPED_TEST(sd_vector_test, builder_exceptions)
         // Too many ones.
         ASSERT_THROW(sd_vector_builder(1024, 1025), std::runtime_error);
     }
+
     {
         // Position is too small.
         sd_vector_builder builder(1024, 3);
         builder.set(128);
         ASSERT_THROW(builder.set(128), std::runtime_error);
     }
+
+    {
+        // Position is too small in a multiset.
+        sd_vector_builder builder(1024, 3, true);
+        builder.set(128);
+        builder.set(128); // This will not throw.
+        ASSERT_THROW(builder.set(127), std::runtime_error);
+    }
+
     {
         // Position is too large.
         sd_vector_builder builder(1024, 3);
         ASSERT_THROW(builder.set(1024), std::runtime_error);
     }
+
     {
         // Not full.
         sd_vector_builder builder(1024, 3);

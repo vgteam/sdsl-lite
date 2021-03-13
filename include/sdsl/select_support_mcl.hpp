@@ -283,7 +283,7 @@ void select_support_mcl<t_b,t_pat_len>::init_fast(const bit_vector* v)
     size_type last_k64 = 1, sb_cnt=0;
     for (size_type i=0, cnt_old=0, cnt_new=0, last_k64_sum=1; i < v->capacity(); i+=64, ++data) {
         cnt_new += select_support_trait<t_b, t_pat_len>::args_in_the_word(*data, carry_new);
-        cnt_new = std::min(cnt_new, m_arg_cnt); // For (0, 0), we may find nonexistent args in the padding after the bitvector.
+        cnt_new = std::min(cnt_new, m_arg_cnt); // For (0, 1), we may find nonexistent args in the padding after the bitvector.
         if (cnt_new >= last_k64_sum) {
             arg_position[last_k64-1] = i + select_support_trait<t_b, t_pat_len>::ith_arg_pos_in_the_word(*data, last_k64_sum  - cnt_old, carry_new);
             last_k64 += 64;
