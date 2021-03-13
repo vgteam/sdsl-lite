@@ -54,8 +54,12 @@ class sd_vector;
 
 //-----------------------------------------------------------------------------
 
-//! Class for in-place construction of sd_vector from a strictly increasing sequence.
+//! Class for in-place construction of sd_vector from an increasing sequence.
 /*! \par Building an `sd_vector` will clear the builder.
+ *
+ *  \par By default, the sequence of positions must be strictly increasing.
+ *  Duplicate values are allowed if the builder is specified to build a
+ *  multiset of integers.
  */
 class sd_vector_builder
 {
@@ -65,7 +69,7 @@ class sd_vector_builder
     private:
         size_type m_size, m_capacity;
         size_type m_wl;
-        size_type m_tail, m_items;
+        size_type m_tail, m_tail_inc, m_items;
         size_type m_last_high, m_highpos;
 
         int_vector<> m_low;
@@ -76,21 +80,24 @@ class sd_vector_builder
     public:
         sd_vector_builder();
 
-        //! Constructor
+        //! Constructor.
         /*! \param n Vector size.
          *  \param m The number of 1-bits.
+         *  \param multiset Allow storing duplicate values.
          *  \par Throws `std::runtime_error` if `m > n`.
          */
-        sd_vector_builder(size_type n, size_type m);
+        sd_vector_builder(size_type n, size_type m, bool multiset = false);
 
         size_type size() const { return m_size; }
         size_type capacity() const { return m_capacity; }
         size_type tail() const { return m_tail; }
         size_type items() const { return m_items; }
+        bool is_multiset() const { return (m_tail_inc == 0); }
 
         //! Sets a bit to 1.
         /*! \param i The position of the bit.
-         *  \par The position must be strictly greater than for the previous call.
+         *  \par The position must be strictly greater than the previous position for a
+         *  normal bitvector and greater than or equal to it for a multiset of integers.
          *  Behavior is undefined if the position is out of range or the vector is full.
          */
         void set_unsafe(size_type i) noexcept
@@ -100,12 +107,14 @@ class sd_vector_builder
             m_last_high = cur_high;
             m_low[m_items++] = i; // int_vector truncates the most significant logm bits
             m_high[m_highpos++] = 1;  // write 1 for the entry
-            m_tail = i + 1;
+            // The next possible value is `i + 1` for a normal bitvector and `i` for a multiset.
+            m_tail = i + m_tail_inc;
         }
 
         //! Sets a bit to 1.
         /*! \param i The position of the bit.
-         *  \par The position must be strictly greater than for the previous call.
+         *  \par The position must be strictly greater than for the previous position for a
+         *  normal bitvector and greater than or equal to it for a multiset of integers.
          *  Throws `std::runtime_error` if the position is out of range or the vector is full.
          */
         void set(size_type i)
@@ -131,7 +140,10 @@ class sd_vector_builder
 //! A bidirectional iterator over the set bits in `sd_vector`.
 /*!
  * \par The `value_type` has semantics `(rank(i), i)` or `(i, select(i + 1))`.
- * Dereferencing an iterator at the end yields `(ones(), size())`.
+ * If the vector encodes a multiset of integers, this iterates over the integers
+ * in sorted order. For such vectors, only the latter interpretation is valid.
+ *
+ * \par Dereferencing an iterator at the end yields `(ones(), size())`.
  */
 template<class t_hi_bit_vector, class t_select_1, class t_select_0>
 class sd_one_iterator
@@ -236,6 +248,9 @@ class sd_one_iterator
 //! A bit vector which compresses very sparse populated bit vectors by
 // representing the positions of 1 by the Elias-Fano representation for non-decreasing sequences
 /*!
+ * \par Unlike other bitvectors, `sd_vector` can store a multiset of integers with duplicate values.
+ * Rank and select queries for bit pattern `0` do not work correctly on a vector encoding a multiset.
+ *
  * \par Other implementations of this data structure:
  *  - the sdarray of Okanohara and Sadakane
  *  - Sebastiano Vigna implemented a elias_fano class in the sux library.
@@ -524,6 +539,9 @@ class sd_vector
         }
 
         //! Returns the number of set bits in the bitvector.
+        /*! \par If the vector encodes a multiset of integers, returns the size of
+         *  the multiset instead.
+         */
         size_type ones() const
         {
             return m_low.size();
@@ -638,6 +656,8 @@ class sd_vector
         /*!
          * \param i Offset in the bitvector.
          * \par Returns `one_end()` if no such bit exists.
+         * If the vector stores a multiset of integers, the iterator points to the last
+         * occurrence of the predecessor value.
          */
         one_iterator predecessor(size_type i) const
         {
@@ -669,6 +689,8 @@ class sd_vector
         /*!
          * \param i Offset in the bitvector.
          * \par Returns `one_end()` if no such bit exists.
+         * If the vector stores a multiset of integers, the iterator points to the first
+         * occurrence of the successor value.
          */
         one_iterator successor(size_type i) const
         {
@@ -737,6 +759,9 @@ struct rank_support_sd_trait<0> {
  *                          the high part of the positions of the 1s.
  *  \tparam t_select_1      Type of the select structure which is used to select ones in HI.
  *  \tparam t_select_0      Type of the select structure which is used to select zeros in HI.
+ *
+ * \par If the vector stores a multiset of integers, rank queries for bit pattern `0` do not
+ * work correctly.
  */
 template<uint8_t t_b, class t_hi_bit_vector, class t_select_1, class t_select_0>
 class rank_support_sd
@@ -924,6 +949,9 @@ class select_support_sd
 //! Select_0 data structure for sd_vector
 /*! \tparam t_sd_vector sd_vector type
  *  \tparam t_rank_1    Rank support for high part of sd_vector
+ *
+ * \par If the vector stores a multiset of integers, select queries for bit pattern `0` do not
+ * work correctly.
  */
 template<typename t_sd_vector=sd_vector<>>
 class select_0_support_sd

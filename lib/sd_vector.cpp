@@ -8,15 +8,15 @@ namespace sdsl
 sd_vector_builder::sd_vector_builder() :
     m_size(0), m_capacity(0),
     m_wl(0),
-    m_tail(0), m_items(0),
+    m_tail(0), m_tail_inc(0), m_items(0),
     m_last_high(0), m_highpos(0)
 {
 }
 
-sd_vector_builder::sd_vector_builder(size_type n, size_type m) :
+sd_vector_builder::sd_vector_builder(size_type n, size_type m, bool multiset) :
     m_size(n), m_capacity(m),
     m_wl(0),
-    m_tail(0), m_items(0),
+    m_tail(0), m_tail_inc((multiset ? 0 : 1)), m_items(0),
     m_last_high(0), m_highpos(0)
 {
     if (m_capacity > m_size) {
@@ -41,6 +41,7 @@ sd_vector_builder::swap(sd_vector_builder& sdb)
     std::swap(m_capacity, sdb.m_capacity);
     std::swap(m_wl, sdb.m_wl);
     std::swap(m_tail, sdb.m_tail);
+    std::swap(m_tail_inc, sdb.m_tail_inc);
     std::swap(m_items, sdb.m_items);
     std::swap(m_last_high, sdb.m_last_high);
     std::swap(m_highpos, sdb.m_highpos);
