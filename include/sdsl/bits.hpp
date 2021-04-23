@@ -23,6 +23,7 @@
 
 #include <stdint.h> // for uint64_t uint32_t declaration
 #include <iostream>// for cerr
+#include <bitset>
 #include <cassert>
 #ifdef __BMI2__
 #include <immintrin.h>
@@ -129,10 +130,7 @@ struct bits {
     static uint32_t length(uint64_t x) { return hi(x) + 1; };
 
     //! Counts the number of 1-bits in the 32bit integer x.
-    /*! This function is a variant of the method cnt. If
-    	32bit multiplication is fast, this method beats the cnt.
-    	for 32bit integers.
-    	\param x 64bit integer to count the bits.
+    /*! \param x 64bit integer to count the bits.
     	\return The number of 1-bits in x.
      */
     static uint32_t cnt32(uint32_t x);
@@ -253,33 +251,15 @@ struct bits {
 
 // ============= inline - implementations ================
 
-// see page 11, Knuth TAOCP Vol 4 F1A
 inline uint64_t bits::cnt(uint64_t x)
 {
-#ifdef __SSE4_2__
-    return __builtin_popcountll(x);
-#else
-#ifdef POPCOUNT_TL
-    return lt_cnt[x&0xFFULL] + lt_cnt[(x>>8)&0xFFULL] +
-           lt_cnt[(x>>16)&0xFFULL] + lt_cnt[(x>>24)&0xFFULL] +
-           lt_cnt[(x>>32)&0xFFULL] + lt_cnt[(x>>40)&0xFFULL] +
-           lt_cnt[(x>>48)&0xFFULL] + lt_cnt[(x>>56)&0xFFULL];
-#else
-    x = x-((x>>1) & 0x5555555555555555ull);
-    x = (x & 0x3333333333333333ull) + ((x >> 2) & 0x3333333333333333ull);
-    x = (x + (x >> 4)) & 0x0f0f0f0f0f0f0f0full;
-    return (0x0101010101010101ull*x >> 56);
-#endif
-#endif
+    return std::bitset<64>(x).count();
 }
 
 inline uint32_t bits::cnt32(uint32_t x)
 {
-    x = x-((x>>1) & 0x55555555);
-    x = (x & 0x33333333) + ((x>>2) & 0x33333333);
-    return (0x10101010*x >>28)+(0x01010101*x >>28);
+    return std::bitset<32>(x).count();
 }
-
 
 inline uint32_t bits::cnt11(uint64_t x, uint64_t& c)
 {
