@@ -25,12 +25,6 @@
 #include <iostream>// for cerr
 #include <bitset>
 #include <cassert>
-#ifdef __BMI2__
-#include <immintrin.h>
-#endif
-#ifdef __SSE4_2__
-#include <xmmintrin.h>
-#endif
 
 #ifdef WIN32
 #include "iso646.h"
@@ -318,7 +312,7 @@ inline uint32_t bits::sel(uint64_t x, uint32_t i)
 #ifdef __BMI2__
     // index i is 1-based here, (i-1) changes it to 0-based
     return __builtin_ctzll(_pdep_u64(1ull << (i-1), x));
-#elif defined(__SSE4_2__)
+#elif defined(__SSE4_2__) || defined(__aarch64__)
     uint64_t s = x, b;
     s = s-((s>>1) & 0x5555555555555555ULL);
     s = (s & 0x3333333333333333ULL) + ((s >> 2) & 0x3333333333333333ULL);
@@ -380,7 +374,7 @@ inline uint32_t bits::_sel(uint64_t x, uint32_t i)
 // http://www-graphics.stanford.edu/~seander/bithacks.html
 inline uint32_t bits::hi(uint64_t x)
 {
-#ifdef __SSE4_2__
+#if defined(__SSE4_2__) || defined(__aarch64__)
     if (x == 0)
         return 0;
     return 63 - __builtin_clzll(x);
@@ -406,7 +400,7 @@ inline uint32_t bits::hi(uint64_t x)
 // or page 10, Knuth TAOCP Vol 4 F1A
 inline uint32_t bits::lo(uint64_t x)
 {
-#ifdef __SSE4_2__
+#if defined(__SSE4_2__) || defined(__aarch64__)
     if (x==0)
         return 0;
     return __builtin_ctzll(x);
