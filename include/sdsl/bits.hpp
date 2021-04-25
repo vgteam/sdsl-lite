@@ -25,6 +25,12 @@
 #include <iostream>// for cerr
 #include <bitset>
 #include <cassert>
+#ifdef __BMI2__
+#include <immintrin.h>
+#endif
+#ifdef __SSE4_2__
+#include <xmmintrin.h>
+#endif
 
 #ifdef WIN32
 #include "iso646.h"
