@@ -29,6 +29,8 @@
 #include "util.hpp"
 #include "iterators.hpp"
 
+#include <cmath>
+
 //! Namespace for the succinct data structure library
 namespace sdsl
 {
@@ -345,14 +347,11 @@ class sd_vector
         {
             m_size = bv.size();
             size_type m = util::cnt_one_bits(bv);
-            uint8_t logm = bits::length(m);
-            uint8_t logn = bits::length(m_size);
-            if (logm == logn) {
-                --logm;    // to ensure logn-logm > 0
-            }
-            m_wl    = logn - logm;
-            m_low = int_vector<>(m, 0, m_wl);
-            bit_vector high = bit_vector(m + (1ULL<<logm), 0); //
+            std::pair<size_type, size_type> params = get_params(m_size, m);
+            m_wl = params.first;
+            m_low = int_vector<>(m, 0, params.first);
+            bit_vector high = bit_vector(params.second, 0);
+
             const uint64_t* bvp = bv.data();
             for (size_type i=0, mm=0,last_high=0,highpos=0; i < (bv.size()+63)/64; ++i, ++bvp) {
                 size_type position = 64*i;
@@ -388,16 +387,14 @@ class sd_vector
             if (! std::is_sorted(begin,end)) {
                 throw std::runtime_error("sd_vector: source list is not sorted.");
             }
+
             size_type m = std::distance(begin,end);
             m_size = *(end-1)+1;
-            uint8_t logm = bits::length(m);
-            uint8_t logn = bits::length(m_size);
-            if (logm == logn) {
-                --logm;    // to ensure logn-logm > 0
-            }
-            m_wl    = logn - logm;
-            m_low = int_vector<>(m, 0, m_wl);
-            bit_vector high = bit_vector(m + (1ULL<<logm), 0);
+            std::pair<size_type, size_type> params = get_params(m_size, m);
+            m_wl = params.first;
+            m_low = int_vector<>(m, 0, params.first);
+            bit_vector high = bit_vector(params.second, 0);
+
             auto itr = begin;
             size_type mm=0,last_high=0,highpos=0;
             while (itr != end) {
@@ -436,6 +433,28 @@ class sd_vector
             util::init_support(m_high_0_select, &(this->m_high));
 
             builder = builder_type();
+        }
+
+        // Returns `(low.width(), high.size())`, assuming that `ones <= universe`.
+        //
+        // This is based on:
+        //
+        //   Ma, Puglisi, Raman, Zhukova:
+        //   On Elias-Fano for Rank Queries in FM-Indexes.
+        //   DCC 2021.
+        static std::pair<size_type, size_type> get_params(size_type universe, size_type ones)
+        {
+            size_type low_width = 1;
+            if (ones > 0) {
+                double ideal_width = std::log2((static_cast<double>(universe) * std::log(2.0)) / static_cast<double>(ones));
+                low_width = std::round(std::max(ideal_width, 1.0));
+            }
+
+            size_type buckets = universe >> low_width;
+            if ((universe & bits::lo_set[low_width]) != 0) {
+                buckets++;
+            }
+            return std::pair<size_type, size_type>(low_width, ones + buckets);
         }
 
 //-----------------------------------------------------------------------------
@@ -785,7 +804,10 @@ class rank_support_sd
         size_type rank(size_type i)const
         {
             assert(m_v != nullptr);
-            assert(i <= m_v->size());
+            if (i >= m_v->size()) {
+                return rank_support_sd_trait<t_b>::adjust_rank(m_v->ones(), m_v->size());
+            }
+
             // split problem in two parts:
             // (1) find  >=
             size_type high_val = (i >> (m_v->wl));
