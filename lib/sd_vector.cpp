@@ -23,15 +23,10 @@ sd_vector_builder::sd_vector_builder(size_type n, size_type m, bool multiset) :
         throw std::runtime_error("sd_vector_builder: requested capacity is larger than vector size.");
     }
 
-    size_type logm = bits::length(m_capacity);
-    const size_type logn = bits::length(m_size);
-    if(logm == logn) {
-        --logm; // to ensure logn-logm > 0
-        assert(logn - logm > 0);
-    }
-    m_wl = logn - logm;
-    m_low = int_vector<>(m_capacity, 0, m_wl);
-    m_high = bit_vector(m_capacity + (1ULL << logm), 0);
+    std::pair<size_type, size_type> params = sd_vector<>::get_params(m_size, m_capacity);
+    m_wl = params.first;
+    m_low = int_vector<>(m_capacity, 0, params.first);
+    m_high = bit_vector(params.second, 0);
 }
 
 void
