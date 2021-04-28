@@ -50,7 +50,7 @@ namespace sdsl
  *
  *  - `void simple_sds_serialize(std::ofstream&) const`: Serialize the structure
  *  into the stream.
- *  - `static Structure` simple_sds_load(std::ifstream&)`: Load the structure
+ *  - `void simple_sds_load(std::ifstream&)`: Load the structure
  *  from the stream.
  *  - `size_t simple_sds_size() const`: Number of elements needed for
  *  serializing the structure.
@@ -67,10 +67,17 @@ typedef std::uint64_t element_type;
 /*! \par This exception indicates that the loaded data failed sanity checks
  */
 class InvalidData : public std::runtime_error {
-    //! Constructor.
+
+public:
+    //! Constructor from a string.
     /*! \param message Message returned by the `what()` method.
      */
     explicit InvalidData(const std::string& message) : std::runtime_error(message) {}
+
+    //! Constructor from a C string.
+    /*! \param message Message returned by the `what()` method.
+     */
+    explicit InvalidData(const char* message) : std::runtime_error(message) {}
 };
 
 //! Serialize the data in a buffer.
@@ -90,6 +97,12 @@ void serialize_data(const char* buffer, size_t size, std::ostream& out);
  *  \par The buffer will be loaded in 32 MiB blocks.
  */
 void load_data(char* buffer, size_t size, std::istream& in);
+
+//! Size of the data in elements
+/*! \param size Size of the data in bytes.
+ *  \return Number of elements needed for serializing the data.
+ */
+size_t data_size(size_t bytes);
 
 //-----------------------------------------------------------------------------
 
@@ -113,13 +126,40 @@ void serialize_value(const Serializable& value, std::ostream& out) {
  *
  *  \par This corresponds to a serializable type in simple-sds.
  */
-template <typename Serializable>
+template<typename Serializable>
 Serializable load_value(std::istream& in) {
     static_assert(sizeof(Serializable) % sizeof(element_type) == 0, "The size of a serializable type must be a multiple of 8 bytes");
     Serializable value;
     in.read(reinterpret_cast<char*>(&value), sizeof(value));
     return value;
 }
+
+//! Size of a serializable type in elements.
+/*! \tparam Serializable A fixed-size type with the size a multiple of 8 bytes.
+ *  \return Number of elements needed for serializing the type.
+ *
+ *  \par This corresponds to a serializable type in simple-sds.
+ */
+template<typename Serializable>
+size_t value_size() {
+    static_assert(sizeof(Serializable) % sizeof(element_type) == 0, "The size of a serializable type must be a multiple of 8 bytes");
+    return sizeof(Serializable) / sizeof(element_type);
+}
+
+//! Size of a serializable type in elements.
+/*! \tparam Serializable A fixed-size type with the size a multiple of 8 bytes.
+ *  \param value A serializable value.
+ *  \return Number of elements needed for serializing the type.
+ *
+ *  \par This corresponds to a serializable type in simple-sds.
+ */
+template<typename Serializable>
+size_t value_size(const Serializable& value) {
+    static_assert(sizeof(Serializable) % sizeof(element_type) == 0, "The size of a serializable type must be a multiple of 8 bytes");
+    return sizeof(value) / sizeof(element_type);
+}
+
+//-----------------------------------------------------------------------------
 
 //! Serialize a vector of items.
 /*! \tparam Item A fixed-size type with the size either 1 byte or a multiple of 8 bytes.
@@ -137,7 +177,7 @@ void serialize_vector(const std::vector<Item>& value, std::ostream& out) {
 
 //! Load a vector of items.
 /*! \tparam Item A fixed-size type with the size either 1 byte or a multiple of 8 bytes.
- *  \param int Input stream for loading the data.
+ *  \param in Input stream for loading the data.
  *  \return The loaded vector.
  *
  *  \par This corresponds to a vector of serializable items or bytes in simple-sds.
@@ -149,6 +189,21 @@ std::vector<Item> load_vector(std::istream& in) {
     load_data(reinterpret_cast<char*>(result.data()), result.size() * sizeof(Item), in);
     return result;
 }
+
+//! Size of a vector in elements.
+/*! \tparam Item A fixed-size type with the size either 1 byte or a multiple of 8 bytes.
+ *  \param value A vector of items.
+ *  \return Number of elements needed for serializing the vector.
+ *
+ *  \par This corresponds to a vector of serializable items or bytes in simple-sds.
+ */
+template<typename Item>
+size_t vector_size(const std::vector<Item>& value) {
+    static_assert(sizeof(Item) == 1 || sizeof(Item) % sizeof(element_type) == 0, "The size of an item must be 1 byte or a multiple of 8 bytes");
+    return value_size(value.size()) + data_size(value.size() * sizeof(Item));
+}
+
+//-----------------------------------------------------------------------------
 
 //! Serialize a string.
 /*! \param value The string to be serialized.
@@ -167,12 +222,36 @@ void serialize_string(const std::string& value, std::ostream& out);
  */
 std::string load_string(std::istream& in);
 
+//! Size of a string in elements.
+/*! \param value a string.
+ *  \return Number of elements needed for serializing the string.
+ *
+ *  \par This corresponds to a string in simple-sds.
+ */
+size_t string_size(const std::string& value);
+
+//-----------------------------------------------------------------------------
+
 //! Serialize an empty optional structure.
 /*! \param out Output stream for serialization.
  *
  *  \par This corresponds to an absent optional structure in simple-sds.
  */
 void empty_option(std::ostream& out);
+
+//! Skip an optional structure without reading it.
+/*! \param in Input stream for loading the data.
+ *
+ *  \par This corresponds to an absent optional structure in simple-sds.
+ */
+void skip_option(std::istream& in);
+
+//! Size of an empty optional structure in elements.
+/*! \return Number of elements needed for serializing an absent optional structure.
+ *
+ *  \par This corresponds to an absent optional structure in simple-sds.
+ */
+size_t empty_option_size();
 
 //! Serialize a non-empty optional structure.
 /*! \tparam Serialize A type implementing the serialization interface.
@@ -187,35 +266,40 @@ void serialize_option(const Serialize& value, std::ostream& out) {
     value.simple_sds_serialize(out);
 }
 
-//! Skip an optional structure without reading it.
-/*! \param in Input stream for loading the data.
- */
-void skip_option(std::istream& in);
-
 //! Load an optional structure.
 /*! \tparam Item A fixed-size type with the size either 1 byte or a multiple of 8 bytes.
+ *  \param value The structure to be loaded.
  *  \param int Input stream for loading the data.
- *  \return A pair where the first component contains the possible value and the second
- *  component is `true` if the value is present and `false` if it is absent.
+ *  \return Returns `true` if the structure was present and `false` if it was absent.
  *
- *  \par This corresponds to an optional structure in simple-sds.
- *  The method throws `InvalidData` if the value is present but its size is invalid.
+ *  \par This corresponds to a present optional structure in simple-sds.
+ *  If the structure is absent, `value` not modified.
+ *  The method throws `InvalidData` if the structure is present but its size is invalid.
  */
 template<typename Serialize>
-std::pair<Serialize, bool> load_option(std::istream& in) {
-    std::pair<Serialize, bool> result;
+bool load_option(Serialize& value, std::istream& in) {
     size_t size = load_value<size_t>(in);
-    std::streampos expected = in.tellg() + size * sizeof(element_type);
     if (size == 0) {
-        result.second = false;
+        return false;
     } else {
-        result.first.simple_sds_load(in);
+        std::streampos expected = in.tellg() + size * sizeof(element_type);
+        value.simple_sds_load(in);
         if (in.tellg() != expected) {
             throw InvalidData("Incorrect size for an optional structure");
         }
-        result.second = true;
+        return true;
     }
-    return result;
+}
+
+//! Size of an optional structure in elements.
+/*! \param value An optional structure.
+ *  \return Number of elements needed for serializing the optional structure.
+ *
+ *  \par This corresponds to a present optional structure in simple-sds.
+ */
+template<typename Serialize>
+size_t option_size(const Serialize& value) {
+    return value_size<size_t>() + value.simple_sds_size();
 }
 
 //-----------------------------------------------------------------------------

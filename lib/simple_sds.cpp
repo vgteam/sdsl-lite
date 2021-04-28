@@ -48,6 +48,10 @@ void load_data(char* buffer, size_t size, std::istream& in) {
     }
 }
 
+size_t data_size(size_t bytes) {
+    return (bytes + padding_length(bytes)) / sizeof(element_type);
+}
+
 //-----------------------------------------------------------------------------
 
 void serialize_string(const std::string& value, std::ostream& out) {
@@ -63,7 +67,13 @@ std::string load_string(std::istream& in) {
     return result;
 }
 
-void missing_option(std::ostream& out) {
+size_t string_size(const std::string& value) {
+    return value_size(value.size()) + data_size(value.length());
+}
+
+//-----------------------------------------------------------------------------
+
+void empty_option(std::ostream& out) {
     size_t size = 0;
     serialize_value(size, out);
 }
@@ -71,6 +81,10 @@ void missing_option(std::ostream& out) {
 void skip_option(std::istream& in) {
     size_t size = load_value<size_t>(in);
     in.seekg(size * sizeof(element_type), std::ios_base::cur);
+}
+
+size_t empty_option_size() {
+    return value_size<size_t>();
 }
 
 //-----------------------------------------------------------------------------
