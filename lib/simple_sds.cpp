@@ -18,12 +18,14 @@ constexpr size_t BLOCK_SIZE = 32 * 1048576;
 //-----------------------------------------------------------------------------
 
 // Returns the number of bytes of padding required after `bytes` bytes of data.
-size_t padding_length(size_t bytes) {
+size_t padding_length(size_t bytes)
+{
     size_t overflow = bytes & (sizeof(element_type) - 1);
     return (overflow > 0 ? sizeof(element_type) - overflow : 0);
 }
 
-void serialize_data(const char* buffer, size_t size, std::ostream& out) {
+void serialize_data(const char* buffer, size_t size, std::ostream& out)
+{
     for (size_t i = 0; i < size; i += BLOCK_SIZE) {
         size_t length = std::min(BLOCK_SIZE, size - i);
         out.write(buffer + i, length);
@@ -36,7 +38,8 @@ void serialize_data(const char* buffer, size_t size, std::ostream& out) {
     }
 }
 
-void load_data(char* buffer, size_t size, std::istream& in) {
+void load_data(char* buffer, size_t size, std::istream& in)
+{
     for (size_t i = 0; i < size; i += BLOCK_SIZE) {
         size_t length = std::min(BLOCK_SIZE, size - i);
         in.read(buffer + i, length);
@@ -54,12 +57,14 @@ size_t data_size(size_t bytes) {
 
 //-----------------------------------------------------------------------------
 
-void serialize_string(const std::string& value, std::ostream& out) {
+void serialize_string(const std::string& value, std::ostream& out)
+{
     serialize_value(value.length(), out);
     serialize_data(value.data(), value.length(), out);
 }
 
-std::string load_string(std::istream& in) {
+std::string load_string(std::istream& in)
+{
     std::string result(load_value<size_t>(in), '\0');
     if (result.length() > 0) {
         load_data(&(result.front()), result.length(), in);
@@ -67,23 +72,27 @@ std::string load_string(std::istream& in) {
     return result;
 }
 
-size_t string_size(const std::string& value) {
+size_t string_size(const std::string& value)
+{
     return value_size(value.size()) + data_size(value.length());
 }
 
 //-----------------------------------------------------------------------------
 
-void empty_option(std::ostream& out) {
+void empty_option(std::ostream& out)
+{
     size_t size = 0;
     serialize_value(size, out);
 }
 
-void skip_option(std::istream& in) {
+void skip_option(std::istream& in)
+{
     size_t size = load_value<size_t>(in);
     in.seekg(size * sizeof(element_type), std::ios_base::cur);
 }
 
-size_t empty_option_size() {
+size_t empty_option_size()
+{
     return value_size<size_t>();
 }
 

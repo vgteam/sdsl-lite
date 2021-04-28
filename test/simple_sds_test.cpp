@@ -16,12 +16,14 @@ struct ByteArray
     std::vector<std::uint8_t> bytes;
     size_t                    sum = 0;
 
-    void simple_sds_serialize(std::ostream& out) const {
+    void simple_sds_serialize(std::ostream& out) const
+    {
         serialize_vector(this->bytes, out);
         serialize_value(this->sum, out);
     }
 
-    void simple_sds_load(std::istream& in) {
+    void simple_sds_load(std::istream& in)
+    {
         this->bytes = load_vector<std::uint8_t>(in);
         this->sum = load_value<size_t>(in);
         size_t real_sum = 0;
@@ -31,11 +33,13 @@ struct ByteArray
         }
     }
 
-    size_t simple_sds_size() const {
+    size_t simple_sds_size() const
+    {
         return vector_size(this->bytes) + value_size(this->sum);
     }
 
-    bool operator==(const ByteArray& another) const {
+    bool operator==(const ByteArray& another) const
+    {
         return (this->bytes == another.bytes && this->sum == another.sum);
     }
 };
@@ -47,7 +51,8 @@ struct ComplexStructure
     ByteArray                 byte_array;
     std::vector<double>       numbers;
 
-    void simple_sds_serialize(std::ostream& out) const {
+    void simple_sds_serialize(std::ostream& out) const
+    {
         serialize_value(this->header, out);
         if (this->has_byte_array) {
             serialize_option(this->byte_array, out);
@@ -57,20 +62,23 @@ struct ComplexStructure
         serialize_vector(this->numbers, out);
     }
 
-    void simple_sds_load(std::istream& in) {
+    void simple_sds_load(std::istream& in)
+    {
         this->header = load_value<std::pair<size_t, size_t>>(in);
         this->has_byte_array = load_option(this->byte_array, in);
         this->numbers = load_vector<double>(in);
     }
 
-    size_t simple_sds_size() const {
+    size_t simple_sds_size() const
+    {
         size_t result = value_size(this->header);
         result += (this->has_byte_array ? option_size(this->byte_array) : empty_option_size());
         result += vector_size(this->numbers);
         return result;
     }
 
-    bool operator==(const ComplexStructure& another) const {
+    bool operator==(const ComplexStructure& another) const
+    {
         return (this->header == another.header &&
                 this->has_byte_array == another.has_byte_array &&
                 this->byte_array == another.byte_array &&
@@ -80,7 +88,8 @@ struct ComplexStructure
 
 //-----------------------------------------------------------------------------
 
-void check_complex_structure(const ComplexStructure& original, size_t expected_size) {
+void check_complex_structure(const ComplexStructure& original, size_t expected_size)
+{
     ASSERT_EQ(original.simple_sds_size(), expected_size) << "Invalid serialization size in elements";
 
     char buffer[] = "simple-sds-XXXXXX";

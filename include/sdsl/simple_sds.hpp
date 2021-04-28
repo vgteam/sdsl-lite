@@ -63,10 +63,20 @@ namespace simple_sds
 //! Serialization is defined in terms of unsigned 64-bit little-endian integers.
 typedef std::uint64_t element_type;
 
+//! Number of bits in an element.
+constexpr size_t ELEMENT_BITS = 64;
+
+//! Number of elements required for `bits` bits.
+inline size_t bits_to_elements(size_t bits)
+{
+    return (bits + ELEMENT_BITS - 1) / ELEMENT_BITS;
+}
+
 //! Custom exception type that extends `std::runtime_error`.
 /*! \par This exception indicates that the loaded data failed sanity checks
  */
-class InvalidData : public std::runtime_error {
+class InvalidData : public std::runtime_error
+{
 
 public:
     //! Constructor from a string.
@@ -86,6 +96,7 @@ public:
  *  \param out Output stream for serialization.
  *
  *  \par The buffer will be serialized in 32 MiB blocks.
+ *  The data will be padded with 0-bytes to the next multiple of 8 bytes.
  */
 void serialize_data(const char* buffer, size_t size, std::ostream& out);
 
@@ -114,7 +125,8 @@ size_t data_size(size_t bytes);
  *  \par This corresponds to a serializable type in simple-sds.
  */
 template<typename Serializable>
-void serialize_value(const Serializable& value, std::ostream& out) {
+void serialize_value(const Serializable& value, std::ostream& out)
+{
     static_assert(sizeof(Serializable) % sizeof(element_type) == 0, "The size of a serializable type must be a multiple of 8 bytes");
     out.write(reinterpret_cast<const char*>(&value), sizeof(value));
 }
@@ -127,7 +139,8 @@ void serialize_value(const Serializable& value, std::ostream& out) {
  *  \par This corresponds to a serializable type in simple-sds.
  */
 template<typename Serializable>
-Serializable load_value(std::istream& in) {
+Serializable load_value(std::istream& in)
+{
     static_assert(sizeof(Serializable) % sizeof(element_type) == 0, "The size of a serializable type must be a multiple of 8 bytes");
     Serializable value;
     in.read(reinterpret_cast<char*>(&value), sizeof(value));
@@ -141,7 +154,8 @@ Serializable load_value(std::istream& in) {
  *  \par This corresponds to a serializable type in simple-sds.
  */
 template<typename Serializable>
-size_t value_size() {
+size_t value_size()
+{
     static_assert(sizeof(Serializable) % sizeof(element_type) == 0, "The size of a serializable type must be a multiple of 8 bytes");
     return sizeof(Serializable) / sizeof(element_type);
 }
@@ -154,7 +168,8 @@ size_t value_size() {
  *  \par This corresponds to a serializable type in simple-sds.
  */
 template<typename Serializable>
-size_t value_size(const Serializable& value) {
+size_t value_size(const Serializable& value)
+{
     static_assert(sizeof(Serializable) % sizeof(element_type) == 0, "The size of a serializable type must be a multiple of 8 bytes");
     return sizeof(value) / sizeof(element_type);
 }
@@ -169,7 +184,8 @@ size_t value_size(const Serializable& value) {
  *  \par This corresponds to a vector of serializable items or bytes in simple-sds.
  */
 template<typename Item>
-void serialize_vector(const std::vector<Item>& value, std::ostream& out) {
+void serialize_vector(const std::vector<Item>& value, std::ostream& out)
+{
     static_assert(sizeof(Item) == 1 || sizeof(Item) % sizeof(element_type) == 0, "The size of an item must be 1 byte or a multiple of 8 bytes");
     serialize_value(value.size(), out);
     serialize_data(reinterpret_cast<const char*>(value.data()), value.size() * sizeof(Item), out);
@@ -183,7 +199,8 @@ void serialize_vector(const std::vector<Item>& value, std::ostream& out) {
  *  \par This corresponds to a vector of serializable items or bytes in simple-sds.
  */
 template<typename Item>
-std::vector<Item> load_vector(std::istream& in) {
+std::vector<Item> load_vector(std::istream& in)
+{
     static_assert(sizeof(Item) == 1 || sizeof(Item) % sizeof(element_type) == 0, "The size of an item must be 1 byte or a multiple of 8 bytes");
     std::vector<Item> result(load_value<size_t>(in));
     load_data(reinterpret_cast<char*>(result.data()), result.size() * sizeof(Item), in);
@@ -198,7 +215,8 @@ std::vector<Item> load_vector(std::istream& in) {
  *  \par This corresponds to a vector of serializable items or bytes in simple-sds.
  */
 template<typename Item>
-size_t vector_size(const std::vector<Item>& value) {
+size_t vector_size(const std::vector<Item>& value)
+{
     static_assert(sizeof(Item) == 1 || sizeof(Item) % sizeof(element_type) == 0, "The size of an item must be 1 byte or a multiple of 8 bytes");
     return value_size(value.size()) + data_size(value.size() * sizeof(Item));
 }
@@ -261,7 +279,8 @@ size_t empty_option_size();
  *  \par This corresponds to a present optional structure in simple-sds.
  */
 template<typename Serialize>
-void serialize_option(const Serialize& value, std::ostream& out) {
+void serialize_option(const Serialize& value, std::ostream& out)
+{
     serialize_value(value.simple_sds_size(), out);
     value.simple_sds_serialize(out);
 }
@@ -277,7 +296,8 @@ void serialize_option(const Serialize& value, std::ostream& out) {
  *  The method throws `InvalidData` if the structure is present but its size is invalid.
  */
 template<typename Serialize>
-bool load_option(Serialize& value, std::istream& in) {
+bool load_option(Serialize& value, std::istream& in)
+{
     size_t size = load_value<size_t>(in);
     if (size == 0) {
         return false;
@@ -298,7 +318,8 @@ bool load_option(Serialize& value, std::istream& in) {
  *  \par This corresponds to a present optional structure in simple-sds.
  */
 template<typename Serialize>
-size_t option_size(const Serialize& value) {
+size_t option_size(const Serialize& value)
+{
     return value_size<size_t>() + value.simple_sds_size();
 }
 
@@ -314,7 +335,8 @@ size_t option_size(const Serialize& value) {
  *  Any exceptions from serialization methods will be passed through.
  */
 template<typename Serialize>
-void serialize_to(const Serialize& data, const std::string& filename) {
+void serialize_to(const Serialize& data, const std::string& filename)
+{
     std::ofstream out;
     out.exceptions(std::ofstream::failbit | std::ofstream::badbit);
     out.open(filename, std::ios_base::binary);
@@ -331,7 +353,8 @@ void serialize_to(const Serialize& data, const std::string& filename) {
  *  Any exceptions from serialization methods will be passed through.
  */
 template<typename Serialize>
-void load_from(Serialize& data, const std::string& filename) {
+void load_from(Serialize& data, const std::string& filename)
+{
     std::ifstream in;
     in.exceptions(std::ifstream::eofbit | std::ifstream::badbit | std::ifstream::failbit);
     in.open(filename, std::ios_base::binary);
