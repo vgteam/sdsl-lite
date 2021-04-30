@@ -1,9 +1,13 @@
 #include "sdsl/sd_vector.hpp"
+#include "sdsl/simple_sds.hpp"
+
 #include <cassert>
 
 //! Namespace for the succinct data structure library
 namespace sdsl
 {
+
+//-----------------------------------------------------------------------------
 
 sd_vector_builder::sd_vector_builder() :
     m_size(0), m_capacity(0),
@@ -44,6 +48,8 @@ sd_vector_builder::swap(sd_vector_builder& sdb)
     m_high.swap(sdb.m_high);
 }
 
+//-----------------------------------------------------------------------------
+
 template<>
 sd_vector<>::sd_vector(builder_type& builder)
 {
@@ -60,5 +66,43 @@ sd_vector<>::sd_vector(builder_type& builder)
 
     builder = builder_type();
 }
+
+template<>
+void
+sd_vector<>::simple_sds_serialize(std::ostream& out) const {
+    simple_sds::serialize_value<size_t>(this->m_size, out);
+    this->m_high.simple_sds_serialize(out);
+    this->m_low.simple_sds_serialize(out);
+}
+
+template<>
+void
+sd_vector<>::simple_sds_load(std::istream& in) {
+    size_t length = simple_sds::load_value<size_t>(in);
+    hi_bit_vector_type high; high.simple_sds_load(in);
+    int_vector<> low; low.simple_sds_load(in);
+
+    if (low.size() > length) {
+        throw simple_sds::InvalidData("Too many set bits");
+    }
+    if (high.size() != low.size() + get_buckets(length, low.width())) {
+        throw simple_sds::InvalidData("Invalid number of buckets");
+    }
+
+    this->m_size = length;
+    this->m_wl = low.width();
+    this->m_high = std::move(high);
+    util::init_support(this->m_high_1_select, &(this->m_high));
+    util::init_support(this->m_high_0_select, &(this->m_high));
+    this->m_low = std::move(low);
+}
+
+template<>
+size_t
+sd_vector<>::simple_sds_size() const {
+    return simple_sds::value_size<size_t>() + this->m_high.simple_sds_size() + this->m_low.simple_sds_size();
+}
+
+//-----------------------------------------------------------------------------
 
 } // end namespace

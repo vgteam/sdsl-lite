@@ -501,12 +501,12 @@ class int_vector
          *  This corresponds to several different simple-sds structures, depending on `t_width`.
          *  `0`: integer vector, `1`: bitvector, other: vector.
          */
-        void simple_sds_load(std::istream& in); // FIXME implement
+        void simple_sds_load(std::istream& in);
 
         //! Returns the size of the vector in elements.
         /*! \return Number of elements required for serializing the vector.
          */
-        size_t simple_sds_size() const; // FIXME implement
+        size_t simple_sds_size() const;
 
         //! non const version of [] operator
         /*! \param i Index the i-th integer of length width().

@@ -1,5 +1,6 @@
 #include "sdsl/simple_sds.hpp"
 #include "sdsl/int_vector.hpp"
+#include "sdsl/sd_vector.hpp"
 #include "gtest/gtest.h"
 
 #include <cstdio>
@@ -406,6 +407,50 @@ TEST_F(Vector, NoPadding)
     int_vector<64> words = random_int_vector<64>(14);
     size_t words_size = 1 + 14;
     this->check<std::uint64_t, 64>(words, words_size);
+}
+
+//-----------------------------------------------------------------------------
+
+class SparseVector : public ::testing::Test
+{
+public:
+    void check(const sd_vector<>& original) const
+    {
+        std::string filename = temp_file_name();
+        ASSERT_NE(filename, "") << "Temporary file creation failed";
+
+        simple_sds::serialize_to(original, filename);
+        size_t expected_size = original.simple_sds_size();
+        size_t bytes = file_size(filename);
+        EXPECT_EQ(bytes, expected_size * sizeof(simple_sds::element_type)) << "Invalid file size";
+
+        sd_vector<> loaded;
+        simple_sds::load_from(loaded, filename);
+        EXPECT_EQ(loaded, original) << "Invalid loaded structure";
+
+        std::remove(filename.c_str());
+    }
+};
+
+TEST_F(SparseVector, Empty)
+{
+    bit_vector empty;
+    sd_vector<> original(empty);
+    this->check(original);
+}
+
+TEST_F(SparseVector, Sparse)
+{
+    bit_vector sparse = random_bit_vector(542, 0.02);
+    sd_vector<> original(sparse);
+    this->check(original);
+}
+
+TEST_F(SparseVector, Dense)
+{
+    bit_vector dense = random_bit_vector(621, 0.5);
+    sd_vector<> original(dense);
+    this->check(original);
 }
 
 //-----------------------------------------------------------------------------
