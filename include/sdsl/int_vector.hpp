@@ -1476,6 +1476,8 @@ bool int_vector<t_width>::operator==(const int_vector& v)const
         return false;
     if (bit_size() != v.bit_size())
         return false;
+    if (width() != v.width())
+        return false;
     if (empty())
         return true;
     const uint64_t* data1 = v.data();
@@ -1625,22 +1627,22 @@ void int_vector<t_width>::simple_sds_serialize(std::ostream& out) const
 {
     if (t_width == 0) {
         // simple_sds integer vector.
-        simple_sds::serialize_value(this->size(), out);
-        simple_sds::serialize_value(static_cast<size_t>(this->width()), out);
-        simple_sds::serialize_value(this->bit_size(), out);
-        simple_sds::serialize_value(this->capacity() / simple_sds::ELEMENT_BITS, out);
+        simple_sds::serialize_value<size_t>(this->size(), out);
+        simple_sds::serialize_value<size_t>(static_cast<size_t>(this->width()), out);
+        simple_sds::serialize_value<size_t>(this->bit_size(), out);
+        simple_sds::serialize_value<size_t>(this->capacity() / simple_sds::ELEMENT_BITS, out);
         simple_sds::serialize_data(reinterpret_cast<const char*>(this->m_data), this->capacity() / 8, out);
     } else if (t_width == 1) {
         // simple-sds bitvector.
-        simple_sds::serialize_value(this->size(), out);
-        simple_sds::serialize_value(this->capacity() / simple_sds::ELEMENT_BITS, out);
+        simple_sds::serialize_value<size_t>(this->size(), out);
+        simple_sds::serialize_value<size_t>(this->capacity() / simple_sds::ELEMENT_BITS, out);
         simple_sds::serialize_data(reinterpret_cast<const char*>(this->m_data), this->capacity() / 8, out);
         simple_sds::empty_option(out); // rank support.
         simple_sds::empty_option(out); // select_1 support.
         simple_sds::empty_option(out); // select_0 support.
     } else {
         // simple_sds vector.
-        simple_sds::serialize_value(this->size(), out);
+        simple_sds::serialize_value<size_t>(this->size(), out);
         simple_sds::serialize_data(reinterpret_cast<const char*>(this->m_data), this->capacity() / 8, out);
     }
 }
@@ -1654,13 +1656,16 @@ void int_vector<t_width>::simple_sds_load(std::istream& in)
         size_t width = simple_sds::load_value<size_t>(in);
         size_t bits = simple_sds::load_value<size_t>(in);
         size_t elements = simple_sds::load_value<size_t>(in);
+        if (width < 1 || width > 64) {
+            throw simple_sds::InvalidData("Width must be between 1 and 64 bits");
+        }
         if (length * width != bits) {
             throw simple_sds::InvalidData("Bit length does not match length * width");
         }
         if (elements != simple_sds::bits_to_elements(bits)) {
             throw simple_sds::InvalidData("Bit length / word length mismatch");
         }
-        this->m_width = width;
+        int_vector_trait<t_width>::set_width(width, this->m_width);
         this->resize(length);
         simple_sds::load_data(reinterpret_cast<char*>(this->m_data), this->capacity() / 8, in);
     } else if (t_width == 1) {
@@ -1676,7 +1681,7 @@ void int_vector<t_width>::simple_sds_load(std::istream& in)
         simple_sds::skip_option(in); // select_1 support.
         simple_sds::skip_option(in); // select_0 support.
     } else {
-        // simple_sds vector.
+        // simple-sds vector.
         size_t length = simple_sds::load_value<size_t>(in);
         this->resize(length);
         simple_sds::load_data(reinterpret_cast<char*>(this->m_data), this->capacity() / 8, in);

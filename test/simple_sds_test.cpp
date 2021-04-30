@@ -1,10 +1,12 @@
 #include "sdsl/simple_sds.hpp"
+#include "sdsl/int_vector.hpp"
 #include "gtest/gtest.h"
 
 #include <cstdio>
 #include <cstdlib>
+#include <random>
 
-using namespace sdsl::simple_sds;
+using namespace sdsl;
 
 namespace
 {
@@ -18,24 +20,24 @@ struct ByteArray
 
     void simple_sds_serialize(std::ostream& out) const
     {
-        serialize_vector(this->bytes, out);
-        serialize_value(this->sum, out);
+        simple_sds::serialize_vector(this->bytes, out);
+        simple_sds::serialize_value(this->sum, out);
     }
 
     void simple_sds_load(std::istream& in)
     {
-        this->bytes = load_vector<std::uint8_t>(in);
-        this->sum = load_value<size_t>(in);
+        this->bytes = simple_sds::load_vector<std::uint8_t>(in);
+        this->sum = simple_sds::load_value<size_t>(in);
         size_t real_sum = 0;
         for (auto value : this->bytes) { real_sum += value; }
         if (real_sum != this->sum) {
-            throw InvalidData("Incorrect sum");
+            throw simple_sds::InvalidData("Incorrect sum");
         }
     }
 
     size_t simple_sds_size() const
     {
-        return vector_size(this->bytes) + value_size(this->sum);
+        return simple_sds::vector_size(this->bytes) + simple_sds::value_size(this->sum);
     }
 
     bool operator==(const ByteArray& another) const
@@ -53,27 +55,27 @@ struct ComplexStructure
 
     void simple_sds_serialize(std::ostream& out) const
     {
-        serialize_value(this->header, out);
+        simple_sds::serialize_value(this->header, out);
         if (this->has_byte_array) {
-            serialize_option(this->byte_array, out);
+            simple_sds::serialize_option(this->byte_array, out);
         } else {
-            empty_option(out);
+            simple_sds::empty_option(out);
         }
-        serialize_vector(this->numbers, out);
+        simple_sds::serialize_vector(this->numbers, out);
     }
 
     void simple_sds_load(std::istream& in)
     {
-        this->header = load_value<std::pair<size_t, size_t>>(in);
-        this->has_byte_array = load_option(this->byte_array, in);
-        this->numbers = load_vector<double>(in);
+        this->header = simple_sds::load_value<std::pair<size_t, size_t>>(in);
+        this->has_byte_array = simple_sds::load_option(this->byte_array, in);
+        this->numbers = simple_sds::load_vector<double>(in);
     }
 
     size_t simple_sds_size() const
     {
-        size_t result = value_size(this->header);
-        result += (this->has_byte_array ? option_size(this->byte_array) : empty_option_size());
-        result += vector_size(this->numbers);
+        size_t result = simple_sds::value_size(this->header);
+        result += (this->has_byte_array ? simple_sds::option_size(this->byte_array) : simple_sds::empty_option_size());
+        result += simple_sds::vector_size(this->numbers);
         return result;
     }
 
@@ -88,37 +90,85 @@ struct ComplexStructure
 
 //-----------------------------------------------------------------------------
 
-void check_complex_structure(const ComplexStructure& original, size_t expected_size)
+std::string temp_file_name()
 {
-    ASSERT_EQ(original.simple_sds_size(), expected_size) << "Invalid serialization size in elements";
-
     char buffer[] = "simple-sds-XXXXXX";
     int fail = mkstemp(buffer);
-    ASSERT_NE(fail, -1) << "Temporary file creation failed";
-    std::string filename(buffer);
+    if (fail == -1) { return std::string(); }
+    else { return std::string(buffer); }
+}
 
-    serialize_to(original, filename);
-    size_t file_size = 0;
+size_t file_size(const std::string& filename)
+{
     struct stat stat_buf;
-    if (stat(filename.c_str(), &stat_buf) == 0) { file_size = stat_buf.st_size; }
-    EXPECT_EQ(file_size, expected_size * sizeof(element_type)) << "Invalid file size";
+    if (stat(filename.c_str(), &stat_buf) == 0) { return stat_buf.st_size; }
+    else { return 0; }
+}
 
-    ComplexStructure loaded;
-    load_from(loaded, filename);
-    EXPECT_EQ(loaded, original) << "Invalid loaded structure";
+bit_vector random_bit_vector(size_t size, double density)
+{
+    bit_vector result(size, 0);
+    std::mt19937_64 rng(0xDEADBEEF);
 
-    std::ifstream in(filename, std::ios_base::binary);
-    in.seekg(value_size(original.header) * sizeof(element_type));
-    skip_option(in);
-    std::vector<double> numbers = load_vector<double>(in);
-    EXPECT_EQ(numbers, original.numbers) << "Invalid numbers after skipping the optional structure";
+    if (density == 0.5) {
+        for (size_t i = 0; i < result.size(); i += 64) {
+            std::uint64_t value = rng() & bits::lo_set[std::min(size_t(result.size() - i), size_t(64))];
+            result.set_int(i, value);
+        }
+    } else {
+        std::bernoulli_distribution distribution(density);
+        for (size_t i = 0; i < result.size(); i++) {
+            result[i] = distribution(rng);
+        }
+    }
 
-    std::remove(filename.c_str());
+    return result;
+}
+
+template<uint8_t t_width>
+int_vector<t_width> random_int_vector(size_t size)
+{
+    int_vector<t_width> result(size, 0);
+    std::mt19937_64 rng(0xDEADBEEF);
+
+    for (size_t i = 0; i < result.size(); i++) {
+        result[i] = rng();
+    }
+
+    return result;
 }
 
 //-----------------------------------------------------------------------------
 
-TEST(SimpleSDSTest, Empty)
+class BasicStructures : public ::testing::Test
+{
+public:
+    void check(const ComplexStructure& original, size_t expected_size) const
+    {
+        ASSERT_EQ(original.simple_sds_size(), expected_size) << "Invalid serialization size in elements";
+
+        std::string filename = temp_file_name();
+        ASSERT_NE(filename, "") << "Temporary file creation failed";
+
+        simple_sds::serialize_to(original, filename);
+        size_t bytes = file_size(filename);
+        EXPECT_EQ(bytes, expected_size * sizeof(simple_sds::element_type)) << "Invalid file size";
+
+        ComplexStructure loaded;
+        simple_sds::load_from(loaded, filename);
+        EXPECT_EQ(loaded, original) << "Invalid loaded structure";
+
+        std::ifstream in(filename, std::ios_base::binary);
+        in.seekg(simple_sds::value_size(original.header) * sizeof(simple_sds::element_type));
+        simple_sds::skip_option(in);
+        std::vector<double> numbers = simple_sds::load_vector<double>(in);
+        EXPECT_EQ(numbers, original.numbers) << "Invalid numbers after skipping the optional structure";
+
+        std::remove(filename.c_str());
+    }
+};
+
+TEST_F(BasicStructures, Empty)
 {
     ComplexStructure original = {
         { 123, 456, },
@@ -127,10 +177,10 @@ TEST(SimpleSDSTest, Empty)
         { },
     };
     size_t expected_size = 2 + 1 + 1;
-    check_complex_structure(original, expected_size);
+    this->check(original, expected_size);
 }
 
-TEST(SimpleSDSTest, Numbers)
+TEST_F(BasicStructures, Numbers)
 {
     ComplexStructure original = {
         { 123, 456, },
@@ -139,10 +189,10 @@ TEST(SimpleSDSTest, Numbers)
         { 1.0, 2.0, 3.0, 5.0, },
     };
     size_t expected_size = 2 + 1 + 5;
-    check_complex_structure(original, expected_size);
+    this->check(original, expected_size);
 }
 
-TEST(SimpleSDSTest, EmptyBytes)
+TEST_F(BasicStructures, EmptyBytes)
 {
     ComplexStructure original = {
         { 123, 456, },
@@ -151,10 +201,10 @@ TEST(SimpleSDSTest, EmptyBytes)
         { },
     };
     size_t expected_size = 2 + 3 + 1;
-    check_complex_structure(original, expected_size);
+    this->check(original, expected_size);
 }
 
-TEST(SimpleSDSTest, BytesWithPadding)
+TEST_F(BasicStructures, BytesWithPadding)
 {
     ComplexStructure original = {
         { 123, 456, },
@@ -163,10 +213,10 @@ TEST(SimpleSDSTest, BytesWithPadding)
         { },
     };
     size_t expected_size = 2 + 4 + 1;
-    check_complex_structure(original, expected_size);
+    this->check(original, expected_size);
 }
 
-TEST(SimpleSDSTest, BytesAndNumbers)
+TEST_F(BasicStructures, BytesAndNumbers)
 {
     ComplexStructure original = {
         { 123, 456, },
@@ -175,10 +225,10 @@ TEST(SimpleSDSTest, BytesAndNumbers)
         { 1.0, 2.0, 3.0, 5.0 },
     };
     size_t expected_size = 2 + 5 + 5;
-    check_complex_structure(original, expected_size);
+    this->check(original, expected_size);
 }
 
-TEST(SimpleSDSTest, BytesAndNumbersWithPadding)
+TEST_F(BasicStructures, BytesAndNumbersWithPadding)
 {
     ComplexStructure original = {
         { 123, 456, },
@@ -187,7 +237,175 @@ TEST(SimpleSDSTest, BytesAndNumbersWithPadding)
         { 1.0, 2.0, 3.0, 5.0 },
     };
     size_t expected_size = 2 + 5 + 5;
-    check_complex_structure(original, expected_size);
+    this->check(original, expected_size);
+}
+
+//-----------------------------------------------------------------------------
+
+class IntegerVector : public ::testing::Test
+{
+public:
+    void check(const int_vector<0>& original, size_t expected_size) const
+    {
+        ASSERT_EQ(original.simple_sds_size(), expected_size) << "Invalid serialization size in elements";
+
+        std::string filename = temp_file_name();
+        ASSERT_NE(filename, "") << "Temporary file creation failed";
+
+        simple_sds::serialize_to(original, filename);
+        size_t bytes = file_size(filename);
+        EXPECT_EQ(bytes, expected_size * sizeof(simple_sds::element_type)) << "Invalid file size";
+
+        int_vector<0> loaded;
+        simple_sds::load_from(loaded, filename);
+        EXPECT_EQ(loaded, original) << "Invalid loaded structure";
+
+        std::remove(filename.c_str());
+    }
+};
+
+TEST_F(IntegerVector, Empty)
+{
+    int_vector<0> original;
+    size_t expected_size = 4 + 0;
+    this->check(original, expected_size);
+}
+
+TEST_F(IntegerVector, EmptyWithWidth)
+{
+    int_vector<0> original;
+    original.width(13);
+    size_t expected_size = 4 + 0;
+    this->check(original, expected_size);
+}
+
+TEST_F(IntegerVector, WithPadding)
+{
+    int_vector<0> original(30, 0, 15);
+    for (size_t i = 0; i < original.size(); i++) { original[i] = 1 + i * (i + 1); }
+    size_t expected_size = 4 + 8;
+    this->check(original, expected_size);
+}
+
+TEST_F(IntegerVector, NoPadding)
+{
+    int_vector<0> original(64, 0, 17);
+    for (size_t i = 0; i < original.size(); i++) { original[i] = 1 + i * (i + 1); }
+    size_t expected_size = 4 + 17;
+    this->check(original, expected_size);
+}
+
+//-----------------------------------------------------------------------------
+
+class BitVector : public ::testing::Test
+{
+public:
+    void check(const bit_vector& original, size_t expected_size) const
+    {
+        ASSERT_EQ(original.simple_sds_size(), expected_size) << "Invalid serialization size in elements";
+
+        std::string filename = temp_file_name();
+        ASSERT_NE(filename, "") << "Temporary file creation failed";
+
+        simple_sds::serialize_to(original, filename);
+        size_t bytes = file_size(filename);
+        EXPECT_EQ(bytes, expected_size * sizeof(simple_sds::element_type)) << "Invalid file size";
+
+        bit_vector loaded;
+        simple_sds::load_from(loaded, filename);
+        EXPECT_EQ(loaded, original) << "Invalid loaded structure";
+
+        std::remove(filename.c_str());
+    }
+};
+
+TEST_F(BitVector, Empty)
+{
+    bit_vector original;
+    size_t expected_size = 2 + 0 + 3;
+    this->check(original, expected_size);
+}
+
+TEST_F(BitVector, WithPadding)
+{
+    bit_vector original = random_bit_vector(515, 0.5);
+    size_t expected_size = 2 + 9 + 3;
+    this->check(original, expected_size);
+}
+
+TEST_F(BitVector, NoPadding)
+{
+    bit_vector original = random_bit_vector(448, 0.5);
+    size_t expected_size = 2 + 7 + 3;
+    this->check(original, expected_size);
+}
+
+//-----------------------------------------------------------------------------
+
+class Vector : public ::testing::Test
+{
+public:
+    template<typename Item, uint8_t t_width>
+    void check(const int_vector<t_width>& original, size_t expected_size) const
+    {
+        ASSERT_EQ(original.simple_sds_size(), expected_size) << "Invalid serialization size in elements for t_width = " << unsigned(t_width);
+
+        std::string filename = temp_file_name();
+        ASSERT_NE(filename, "") << "Temporary file creation failed for t_width = " << unsigned(t_width);
+
+        simple_sds::serialize_to(original, filename);
+        size_t bytes = file_size(filename);
+        EXPECT_EQ(bytes, expected_size * sizeof(simple_sds::element_type)) << "Invalid file size for t_width = " << unsigned(t_width);
+
+        int_vector<t_width> loaded;
+        simple_sds::load_from(loaded, filename);
+        EXPECT_EQ(loaded, original) << "Invalid loaded structure for t_width = " << unsigned(t_width);
+
+        std::ifstream in(filename, std::ios_base::binary);
+        std::vector<Item> as_vector = simple_sds::load_vector<Item>(in);
+        in.close();
+
+        // Remove the temporary file first in case the length test fails.
+        std::remove(filename.c_str());
+
+        ASSERT_EQ(as_vector.size(), original.size()) << "Invalid std::vector size for t_width = " << unsigned(t_width);
+        bool ok = true;
+        for (size_t i = 0; i < as_vector.size(); i++) {
+            if (as_vector[i] != original[i]) {
+                ok = false; break;
+            }
+        }
+        EXPECT_TRUE(ok) << "Invalid std::vector values for t_width = " << unsigned(t_width);
+    }
+};
+
+TEST_F(Vector, Empty)
+{
+    int_vector<8> bytes;
+    size_t bytes_size = 1 + 0;
+    this->check<std::uint8_t, 8>(bytes, bytes_size);
+
+    int_vector<64> words;
+    size_t words_size = 1 + 0;
+    this->check<std::uint64_t, 64>(words, words_size);
+}
+
+TEST_F(Vector, BytesWithPadding)
+{
+    int_vector<8> bytes = random_int_vector<8>(123);
+    size_t bytes_size = 1 + 16;
+    this->check<std::uint8_t, 8>(bytes, bytes_size);
+}
+
+TEST_F(Vector, NoPadding)
+{
+    int_vector<8> bytes = random_int_vector<8>(96);
+    size_t bytes_size = 1 + 12;
+    this->check<std::uint8_t, 8>(bytes, bytes_size);
+
+    int_vector<64> words = random_int_vector<64>(14);
+    size_t words_size = 1 + 14;
+    this->check<std::uint64_t, 64>(words, words_size);
 }
 
 //-----------------------------------------------------------------------------
