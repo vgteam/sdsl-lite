@@ -449,12 +449,18 @@ class sd_vector
                 double ideal_width = std::log2((static_cast<double>(universe) * std::log(2.0)) / static_cast<double>(ones));
                 low_width = std::round(std::max(ideal_width, 1.0));
             }
+            size_type buckets = get_buckets(universe, low_width);
+            return std::pair<size_type, size_type>(low_width, ones + buckets);
+        }
 
+        // Returns the number of buckets.
+        static size_type get_buckets(size_type universe, size_type low_width)
+        {
             size_type buckets = universe >> low_width;
             if ((universe & bits::lo_set[low_width]) != 0) {
                 buckets++;
             }
-            return std::pair<size_type, size_type>(low_width, ones + buckets);
+            return buckets;
         }
 
 //-----------------------------------------------------------------------------
@@ -631,6 +637,37 @@ class sd_vector
 
 //-----------------------------------------------------------------------------
 
+        //! Serializes the vector to a stream in the simple-sds format.
+        /*! \param out The output stream.
+         *
+         *  \par Error handling is based on exceptions from the output stream.
+         *  This corresponds to a simple-sds sparse bitvector.
+         *  NOTE: simple-sds serialization has only been implemented for the default template parameters.
+         */
+        void simple_sds_serialize(std::ostream& out) const {
+            throw std::logic_error("simple-sds serialization has not been implemented for these template parameters");
+        }
+
+        //! Loads the vector to a stream in the simple-sds format.
+        /*! \param in The input stream.
+         *
+         *  \par Error handling is based on exceptions from the input stream.
+         *  This corresponds to a simple-sds sparse bitvector.
+         *  NOTE: simple-sds serialization has only been implemented for the default template parameters.
+         */
+        void simple_sds_load(std::istream& in) {
+            throw std::logic_error("simple-sds serialization has not been implemented for these template parameters");
+        }
+
+        //! Returns the size of the vector in elements.
+        /*! \return Number of elements required for serializing the vector.
+         */
+        size_t simple_sds_size() const {
+            throw std::logic_error("simple-sds serialization has not been implemented for these template parameters");
+        }
+
+//-----------------------------------------------------------------------------
+
         iterator begin() const
         {
             return iterator(this, 0);
@@ -751,6 +788,15 @@ class sd_vector
 
 //! Specialized constructor that is a bit more space-efficient than the default.
 template<> sd_vector<>::sd_vector(builder_type& builder);
+
+//! simple-sds serialization for the default template parameters.
+template<> void sd_vector<>::simple_sds_serialize(std::ostream& out) const;
+
+//! simple-sds loading for the default template parameters.
+template<> void sd_vector<>::simple_sds_load(std::istream& in);
+
+//! simple-sds serialized size for the default template parameters.
+template<> size_t sd_vector<>::simple_sds_size() const;
 
 //-----------------------------------------------------------------------------
 

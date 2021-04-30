@@ -27,6 +27,7 @@
 #include "io.hpp"
 #include "config.hpp"
 #include "uintx_t.hpp"
+#include "simple_sds.hpp"
 
 #include "memory_management.hpp"
 #include "ram_fs.hpp"
@@ -483,6 +484,29 @@ class int_vector
 
         //! Load the int_vector for a stream.
         void load(std::istream& in);
+
+        //! Serializes the vector to a stream in the simple-sds format.
+        /*! \param out The output stream.
+         *
+         *  \par Error handling is based on exceptions from the output stream.
+         *  This corresponds to several different simple-sds structures, depending on `t_width`.
+         *  `0`: integer vector, `1`: bitvector, other: vector.
+         */
+        void simple_sds_serialize(std::ostream& out) const;
+
+        //! Loads the vector to a stream in the simple-sds format.
+        /*! \param in The input stream.
+         *
+         *  \par Error handling is based on exceptions from the input stream.
+         *  This corresponds to several different simple-sds structures, depending on `t_width`.
+         *  `0`: integer vector, `1`: bitvector, other: vector.
+         */
+        void simple_sds_load(std::istream& in);
+
+        //! Returns the size of the vector in elements.
+        /*! \return Number of elements required for serializing the vector.
+         */
+        size_t simple_sds_size() const;
 
         //! non const version of [] operator
         /*! \param i Index the i-th integer of length width().
@@ -1452,6 +1476,8 @@ bool int_vector<t_width>::operator==(const int_vector& v)const
         return false;
     if (bit_size() != v.bit_size())
         return false;
+    if (width() != v.width())
+        return false;
     if (empty())
         return true;
     const uint64_t* data1 = v.data();
@@ -1593,6 +1619,96 @@ void int_vector<t_width>::load(std::istream& in)
     }
     in.read((char*) p, ((capacity()>>6)-idx)*sizeof(uint64_t));
 }
+
+//-----------------------------------------------------------------------------
+
+template<uint8_t t_width>
+void int_vector<t_width>::simple_sds_serialize(std::ostream& out) const
+{
+    if (t_width == 0) {
+        // simple_sds integer vector.
+        simple_sds::serialize_value<size_t>(this->size(), out);
+        simple_sds::serialize_value<size_t>(static_cast<size_t>(this->width()), out);
+        simple_sds::serialize_value<size_t>(this->bit_size(), out);
+        simple_sds::serialize_value<size_t>(this->capacity() / simple_sds::ELEMENT_BITS, out);
+        simple_sds::serialize_data(reinterpret_cast<const char*>(this->m_data), this->capacity() / 8, out);
+    } else if (t_width == 1) {
+        // simple-sds bitvector.
+        simple_sds::serialize_value<size_t>(util::cnt_one_bits(*this), out);
+        simple_sds::serialize_value<size_t>(this->size(), out);
+        simple_sds::serialize_value<size_t>(this->capacity() / simple_sds::ELEMENT_BITS, out);
+        simple_sds::serialize_data(reinterpret_cast<const char*>(this->m_data), this->capacity() / 8, out);
+        simple_sds::empty_option(out); // rank support.
+        simple_sds::empty_option(out); // select_1 support.
+        simple_sds::empty_option(out); // select_0 support.
+    } else {
+        // simple_sds vector.
+        simple_sds::serialize_value<size_t>(this->size(), out);
+        simple_sds::serialize_data(reinterpret_cast<const char*>(this->m_data), this->capacity() / 8, out);
+    }
+}
+
+template<uint8_t t_width>
+void int_vector<t_width>::simple_sds_load(std::istream& in)
+{
+    if (t_width == 0) {
+        // simple_sds integer vector.
+        size_t length = simple_sds::load_value<size_t>(in);
+        size_t width = simple_sds::load_value<size_t>(in);
+        size_t bits = simple_sds::load_value<size_t>(in);
+        size_t elements = simple_sds::load_value<size_t>(in);
+        if (width < 1 || width > 64) {
+            throw simple_sds::InvalidData("Width must be between 1 and 64 bits");
+        }
+        if (length * width != bits) {
+            throw simple_sds::InvalidData("Bit length does not match length * width");
+        }
+        if (elements != simple_sds::bits_to_elements(bits)) {
+            throw simple_sds::InvalidData("Bit length / word length mismatch");
+        }
+        int_vector_trait<t_width>::set_width(width, this->m_width);
+        this->resize(length);
+        simple_sds::load_data(reinterpret_cast<char*>(this->m_data), this->capacity() / 8, in);
+    } else if (t_width == 1) {
+        // simple-sds bitvector.
+        size_t ones = simple_sds::load_value<size_t>(in);
+        size_t bits = simple_sds::load_value<size_t>(in);
+        size_t elements = simple_sds::load_value<size_t>(in);
+        if (ones > bits) {
+            throw simple_sds::InvalidData("Too many set bits");
+        }
+        if (elements != simple_sds::bits_to_elements(bits)) {
+            throw simple_sds::InvalidData("Bit length / word length mismatch");
+        }
+        this->resize(bits);
+        simple_sds::load_data(reinterpret_cast<char*>(this->m_data), this->capacity() / 8, in);
+        simple_sds::skip_option(in); // rank support.
+        simple_sds::skip_option(in); // select_1 support.
+        simple_sds::skip_option(in); // select_0 support.
+    } else {
+        // simple-sds vector.
+        size_t length = simple_sds::load_value<size_t>(in);
+        this->resize(length);
+        simple_sds::load_data(reinterpret_cast<char*>(this->m_data), this->capacity() / 8, in);
+    }
+}
+
+template<uint8_t t_width>
+size_t int_vector<t_width>::simple_sds_size() const
+{
+    if (t_width == 0) {
+        // simple_sds integer vector.
+        return 4 * simple_sds::value_size<size_t>() + simple_sds::bits_to_elements(this->bit_size());
+    } else if (t_width == 1) {
+        // simple-sds bitvector.
+        return 3 * simple_sds::value_size<size_t>() + simple_sds::bits_to_elements(this->bit_size()) + 3 * simple_sds::empty_option_size();
+    } else {
+        // simple_sds vector.
+        return simple_sds::value_size<size_t>() + simple_sds::bits_to_elements(this->bit_size());
+    }
+}
+
+//-----------------------------------------------------------------------------
 
 }// end namespace sdsl
 
