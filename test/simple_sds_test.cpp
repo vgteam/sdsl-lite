@@ -323,21 +323,21 @@ public:
 TEST_F(BitVector, Empty)
 {
     bit_vector original;
-    size_t expected_size = 2 + 0 + 3;
+    size_t expected_size = 3 + 0 + 3;
     this->check(original, expected_size);
 }
 
 TEST_F(BitVector, WithPadding)
 {
     bit_vector original = random_bit_vector(515, 0.5);
-    size_t expected_size = 2 + 9 + 3;
+    size_t expected_size = 3 + 9 + 3;
     this->check(original, expected_size);
 }
 
 TEST_F(BitVector, NoPadding)
 {
     bit_vector original = random_bit_vector(448, 0.5);
-    size_t expected_size = 2 + 7 + 3;
+    size_t expected_size = 3 + 7 + 3;
     this->check(original, expected_size);
 }
 
