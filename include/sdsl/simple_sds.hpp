@@ -302,7 +302,7 @@ bool load_option(Serialize& value, std::istream& in)
     if (size == 0) {
         return false;
     } else {
-        std::streampos expected = in.tellg() + size * sizeof(element_type);
+        size_t expected = static_cast<size_t>(in.tellg()) + size * sizeof(element_type);
         value.simple_sds_load(in);
         if (in.tellg() != expected) {
             throw InvalidData("Incorrect size for an optional structure");

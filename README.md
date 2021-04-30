@@ -12,6 +12,7 @@ As [SDSL 2](https://github.com/simongog/sdsl-lite) is no longer maintained, vgte
   * `sd_vector::one_iterator`: Iterator over set bits.
   * Predecessor and successor queries.
   * Defined semantics for an `sd_vector` encoding a multiset of integers.
+  * Smaller size due to a better formula for the number of buckets.
 * `rle_vector`: A run-length encoded bitvector.
 * Proper support for 64-bit ARM.
 * Support for the [simple-sds serialization format](https://github.com/jltsiren/simple-sds/blob/main/SERIALIZATION.md):
