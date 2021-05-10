@@ -331,7 +331,7 @@ class sd_vector
         const select_1_support_type& high_1_select = m_high_1_select;
         const select_0_support_type& high_0_select = m_high_0_select;
 
-        sd_vector() { }
+        sd_vector() { this->m_wl = this->low.width(); }
 
         sd_vector(const sd_vector& sd)
         {
