@@ -72,12 +72,9 @@ inline size_t bits_to_elements(size_t bits)
     return (bits + ELEMENT_BITS - 1) / ELEMENT_BITS;
 }
 
-//! Custom exception type that extends `std::runtime_error`.
-/*! \par This exception indicates that the loaded data failed sanity checks
- */
+//! An exception that indicates that the loaded data failed sanity checks.
 class InvalidData : public std::runtime_error
 {
-
 public:
     //! Constructor from a string.
     /*! \param message Message returned by the `what()` method.
@@ -88,6 +85,26 @@ public:
     /*! \param message Message returned by the `what()` method.
      */
     explicit InvalidData(const char* message) : std::runtime_error(message) {}
+};
+
+//! An exception that indicates that the file could not be opened.
+class CannotOpenFile : public std::runtime_error
+{
+public:
+    //! Constructor from a string.
+    /*! \param filename Name of the file.
+     *  \param for_writing `true` if the file was to be opened for writing.
+     */
+    explicit CannotOpenFile(const std::string& filename, bool for_writing) :
+        std::runtime_error(msg(filename, for_writing)) {
+    }
+
+    static std::string msg(const std::string& filename, bool for_writing) {
+        std::string msg = "Cannot open ";
+        msg += filename;
+        msg += (for_writing ? " for writing" : " for reading");
+        return msg;
+    }
 };
 
 //! Serialize the data in a buffer.
@@ -331,6 +348,7 @@ size_t option_size(const Serialize& value)
  *  \param filename File name for serialization.
  *
  *  \par If the file exists, it will be overwritten.
+ *  Throws `CannotOpenFile` if the file cannot be opened.
  *  Output stream errors are thrown as exceptions.
  *  Any exceptions from serialization methods will be passed through.
  */
@@ -342,8 +360,7 @@ void serialize_to(const Serialize& data, const std::string& filename)
     // The default error message can be uninformative.
     out.open(filename, std::ios_base::binary);
     if (!out) {
-        std::string msg = "serialize_to: Cannot open "; msg += filename;
-        throw std::ofstream::failure(msg);
+        throw CannotOpenFile(filename, true);
     }
 
     out.exceptions(std::ofstream::failbit | std::ofstream::badbit);
@@ -356,7 +373,8 @@ void serialize_to(const Serialize& data, const std::string& filename)
  *  \param data The structure to be loaded.
  *  \param filename File name for the data.
  *
- *  \par Input stream errors are thrown as exceptions.
+ *  \par Throws `CannotOpenFile` if the file cannot be opened.
+ *  Input stream errors are thrown as exceptions.
  *  Any exceptions from serialization methods will be passed through.
  */
 template<typename Serialize>
@@ -367,8 +385,7 @@ void load_from(Serialize& data, const std::string& filename)
     // The default error message can be uninformative.
     in.open(filename, std::ios_base::binary);
     if (!in) {
-        std::string msg = "load_from: Cannot open "; msg += filename;
-        throw std::ifstream::failure(msg);
+        throw CannotOpenFile(filename, false);
     }
 
     in.exceptions(std::ifstream::eofbit | std::ifstream::badbit | std::ifstream::failbit);
