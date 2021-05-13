@@ -355,10 +355,8 @@ size_t option_size(const Serialize& value)
 template<typename Serialize>
 void serialize_to(const Serialize& data, const std::string& filename)
 {
-    std::ofstream out;
-
     // The default error message can be uninformative.
-    out.open(filename, std::ios_base::binary);
+    std::ofstream out(filename, std::ios_base::binary);
     if (!out) {
         throw CannotOpenFile(filename, true);
     }
@@ -380,10 +378,8 @@ void serialize_to(const Serialize& data, const std::string& filename)
 template<typename Serialize>
 void load_from(Serialize& data, const std::string& filename)
 {
-    std::ifstream in;
-
     // The default error message can be uninformative.
-    in.open(filename, std::ios_base::binary);
+    std::ifstream in(filename, std::ios_base::binary);
     if (!in) {
         throw CannotOpenFile(filename, false);
     }
