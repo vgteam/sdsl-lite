@@ -338,8 +338,15 @@ template<typename Serialize>
 void serialize_to(const Serialize& data, const std::string& filename)
 {
     std::ofstream out;
-    out.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+
+    // The default error message can be uninformative.
     out.open(filename, std::ios_base::binary);
+    if (!out) {
+        std::string msg = "serialize_to: Cannot open "; msg += filename;
+        throw std::ofstream::failure(msg);
+    }
+
+    out.exceptions(std::ofstream::failbit | std::ofstream::badbit);
     data.simple_sds_serialize(out);
     out.close();
 }
@@ -356,8 +363,15 @@ template<typename Serialize>
 void load_from(Serialize& data, const std::string& filename)
 {
     std::ifstream in;
-    in.exceptions(std::ifstream::eofbit | std::ifstream::badbit | std::ifstream::failbit);
+
+    // The default error message can be uninformative.
     in.open(filename, std::ios_base::binary);
+    if (!in) {
+        std::string msg = "load_from: Cannot open "; msg += filename;
+        throw std::ifstream::failure(msg);
+    }
+
+    in.exceptions(std::ifstream::eofbit | std::ifstream::badbit | std::ifstream::failbit);
     data.simple_sds_load(in);
     in.close();
 }
