@@ -71,7 +71,20 @@ template<>
 void
 sd_vector<>::simple_sds_serialize(std::ostream& out) const {
     simple_sds::serialize_value<size_t>(this->m_size, out);
-    this->m_high.simple_sds_serialize(out);
+
+    // The vector may have been built with another SDSL fork or with an older version
+    // of this fork. If the number of buckets is too high, we serialize a copy of the
+    // `high` bitvector instead.
+    size_type buckets = get_buckets(this->size(), this->m_low.width());
+    if (this->m_high.size() > buckets + this->ones()) {
+        bit_vector high_copy = this->m_high;
+        high_copy.resize(buckets + this->ones());
+        high_copy.simple_sds_serialize(out);
+    }
+    else {
+        this->m_high.simple_sds_serialize(out);
+    }
+
     this->m_low.simple_sds_serialize(out);
 }
 
