@@ -69,7 +69,8 @@ sd_vector<>::sd_vector(builder_type& builder)
 
 template<>
 void
-sd_vector<>::simple_sds_serialize(std::ostream& out) const {
+sd_vector<>::simple_sds_serialize(std::ostream& out) const
+{
     simple_sds::serialize_value<size_t>(this->m_size, out);
 
     // The vector may have been built with another SDSL fork or with an older version
@@ -90,7 +91,8 @@ sd_vector<>::simple_sds_serialize(std::ostream& out) const {
 
 template<>
 void
-sd_vector<>::simple_sds_load(std::istream& in) {
+sd_vector<>::simple_sds_load(std::istream& in)
+{
     size_t length = simple_sds::load_value<size_t>(in);
     hi_bit_vector_type high; high.simple_sds_load(in);
     int_vector<> low; low.simple_sds_load(in);
@@ -112,8 +114,17 @@ sd_vector<>::simple_sds_load(std::istream& in) {
 
 template<>
 size_t
-sd_vector<>::simple_sds_size() const {
+sd_vector<>::simple_sds_size() const
+{
     return simple_sds::value_size<size_t>() + this->m_high.simple_sds_size() + this->m_low.simple_sds_size();
+}
+
+template<>
+size_t
+sd_vector<>::simple_sds_size(size_t n, size_t m)
+{
+    std::pair<size_type, size_type> params = get_params(n, m);
+    return simple_sds::value_size<size_t>() + bit_vector::simple_sds_size(params.second) + int_vector<0>::simple_sds_size(m, params.first);
 }
 
 //-----------------------------------------------------------------------------

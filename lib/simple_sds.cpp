@@ -77,6 +77,11 @@ size_t string_size(const std::string& value)
     return value_size(value.size()) + data_size(value.length());
 }
 
+size_t string_size(size_t n)
+{
+    return value_size<size_t>() + data_size(n);
+}
+
 //-----------------------------------------------------------------------------
 
 void empty_option(std::ostream& out)

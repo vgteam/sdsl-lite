@@ -508,6 +508,13 @@ class int_vector
          */
         size_t simple_sds_size() const;
 
+        //! Returns the size of a vector in elements.
+        /*! \param n Length of a vector.
+         *  \param width Width of an item in bits. Ignored for `t_width != 0`.
+         *  \return Number of elements required for serializing the vector.
+         */
+        static size_t simple_sds_size(size_t n, size_t width = t_width);
+
         //! non const version of [] operator
         /*! \param i Index the i-th integer of length width().
          *  \return A reference to the i-th integer of length width().
@@ -1705,6 +1712,21 @@ size_t int_vector<t_width>::simple_sds_size() const
     } else {
         // simple_sds vector.
         return simple_sds::value_size<size_t>() + simple_sds::bits_to_elements(this->bit_size());
+    }
+}
+
+template<uint8_t t_width>
+size_t int_vector<t_width>::simple_sds_size(size_t n, size_t width)
+{
+    if (t_width == 0) {
+        // simple_sds integer vector.
+        return 3 * simple_sds::value_size<size_t>() + simple_sds::vector_size<std::uint64_t>(simple_sds::bits_to_elements(n * width));
+    } else if (t_width == 1) {
+        // simple-sds bitvector.
+        return 2 * simple_sds::value_size<size_t>() + simple_sds::vector_size<std::uint64_t>(simple_sds::bits_to_elements(n)) + 3 * simple_sds::empty_option_size();
+    } else {
+        // simple_sds vector.
+        return simple_sds::vector_size<std::uint64_t>(simple_sds::bits_to_elements(n * t_width));
     }
 }
 

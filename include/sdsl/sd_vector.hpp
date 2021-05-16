@@ -666,6 +666,15 @@ class sd_vector
             throw std::logic_error("simple-sds serialization has not been implemented for these template parameters");
         }
 
+        //! Returns the size of a vector in elements.
+        /*! \param n Vector size.
+         *  \param m Number of set bits.
+         *  \return Number of elements required for serializing the vector.
+         */
+        static size_t simple_sds_size(size_t n, size_t m) {
+            throw std::logic_error("simple-sds serialization has not been implemented for these template parameters");
+        }
+
 //-----------------------------------------------------------------------------
 
         iterator begin() const
@@ -797,6 +806,9 @@ template<> void sd_vector<>::simple_sds_load(std::istream& in);
 
 //! simple-sds serialized size for the default template parameters.
 template<> size_t sd_vector<>::simple_sds_size() const;
+
+//! simple-sds serialized size for the default template parameters.
+template<> size_t sd_vector<>::simple_sds_size(size_t n, size_t m);
 
 //-----------------------------------------------------------------------------
 

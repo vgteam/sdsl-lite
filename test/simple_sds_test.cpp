@@ -249,6 +249,7 @@ public:
     void check(const int_vector<0>& original, size_t expected_size) const
     {
         ASSERT_EQ(original.simple_sds_size(), expected_size) << "Invalid serialization size in elements";
+        EXPECT_EQ(int_vector<0>::simple_sds_size(original.size(), original.width()), expected_size) << "Invalid size estimate";
 
         std::string filename = temp_file_name();
         ASSERT_NE(filename, "") << "Temporary file creation failed";
@@ -304,6 +305,7 @@ public:
     void check(const bit_vector& original, size_t expected_size) const
     {
         ASSERT_EQ(original.simple_sds_size(), expected_size) << "Invalid serialization size in elements";
+        EXPECT_EQ(bit_vector::simple_sds_size(original.size()), expected_size) << "Invalid size estimate";
 
         std::string filename = temp_file_name();
         ASSERT_NE(filename, "") << "Temporary file creation failed";
@@ -350,6 +352,7 @@ public:
     void check(const int_vector<t_width>& original, size_t expected_size) const
     {
         ASSERT_EQ(original.simple_sds_size(), expected_size) << "Invalid serialization size in elements for t_width = " << unsigned(t_width);
+        EXPECT_EQ(int_vector<t_width>::simple_sds_size(original.size()), expected_size) << "Invalid size estimate";
 
         std::string filename = temp_file_name();
         ASSERT_NE(filename, "") << "Temporary file creation failed for t_width = " << unsigned(t_width);
@@ -416,11 +419,13 @@ class SparseVector : public ::testing::Test
 public:
     void check(const sd_vector<>& original) const
     {
+        size_t expected_size = original.simple_sds_size();
+        EXPECT_EQ(sd_vector<>::simple_sds_size(original.size(), original.ones()), expected_size) << "Invalid size estimate";
+
         std::string filename = temp_file_name();
         ASSERT_NE(filename, "") << "Temporary file creation failed";
 
         simple_sds::serialize_to(original, filename);
-        size_t expected_size = original.simple_sds_size();
         size_t bytes = file_size(filename);
         EXPECT_EQ(bytes, expected_size * sizeof(simple_sds::element_type)) << "Invalid file size";
 

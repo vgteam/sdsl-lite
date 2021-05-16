@@ -238,6 +238,20 @@ size_t vector_size(const std::vector<Item>& value)
     return value_size(value.size()) + data_size(value.size() * sizeof(Item));
 }
 
+//! Size of a vector in elements.
+/*! \tparam Item A fixed-size type with the size either 1 byte or a multiple of 8 bytes.
+ *  \param n Length of the vector.
+ *  \return Number of elements needed for serializing the vector.
+ *
+ *  \par This corresponds to a vector of serializable items or bytes in simple-sds.
+ */
+template<typename Item>
+size_t vector_size(size_t n)
+{
+    static_assert(sizeof(Item) == 1 || sizeof(Item) % sizeof(element_type) == 0, "The size of an item must be 1 byte or a multiple of 8 bytes");
+    return value_size<size_t>() + data_size(n * sizeof(Item));
+}
+
 //-----------------------------------------------------------------------------
 
 //! Serialize a string.
@@ -258,12 +272,20 @@ void serialize_string(const std::string& value, std::ostream& out);
 std::string load_string(std::istream& in);
 
 //! Size of a string in elements.
-/*! \param value a string.
+/*! \param value A string.
  *  \return Number of elements needed for serializing the string.
  *
  *  \par This corresponds to a string in simple-sds.
  */
 size_t string_size(const std::string& value);
+
+//! Size of a string in elements.
+/*! \param n Length of the string.
+ *  \return Number of elements needed for serializing the string.
+ *
+ *  \par This corresponds to a string in simple-sds.
+ */
+size_t string_size(size_t n);
 
 //-----------------------------------------------------------------------------
 
