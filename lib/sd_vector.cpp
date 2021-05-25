@@ -116,7 +116,9 @@ template<>
 size_t
 sd_vector<>::simple_sds_size() const
 {
-    return simple_sds::value_size<size_t>() + this->m_high.simple_sds_size() + this->m_low.simple_sds_size();
+    // Same correction for old vectors as in `simple_sds_serialize()`.
+    size_t buckets = get_buckets(this->size(), this->m_low.width());
+    return simple_sds::value_size<size_t>() + bit_vector::simple_sds_size(buckets + this->ones()) + this->m_low.simple_sds_size();
 }
 
 template<>
