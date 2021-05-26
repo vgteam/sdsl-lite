@@ -23,8 +23,8 @@ sd_vector_builder::sd_vector_builder(size_type n, size_type m, bool multiset) :
     m_tail(0), m_tail_inc((multiset ? 0 : 1)), m_items(0),
     m_last_high(0), m_highpos(0)
 {
-    if (m_capacity > m_size) {
-        throw std::runtime_error("sd_vector_builder: requested capacity is larger than vector size.");
+    if (!multiset && m_capacity > m_size) {
+        throw std::runtime_error("sd_vector_builder: requested capacity is larger than vector size");
     }
 
     std::pair<size_type, size_type> params = sd_vector<>::get_params(m_size, m_capacity);
@@ -97,9 +97,7 @@ sd_vector<>::simple_sds_load(std::istream& in)
     hi_bit_vector_type high; high.simple_sds_load(in);
     int_vector<> low; low.simple_sds_load(in);
 
-    if (low.size() > length) {
-        throw simple_sds::InvalidData("Too many set bits");
-    }
+    // It may be that `low.size() > length` because we have a very dense multiset.
     if (high.size() != low.size() + get_buckets(length, low.width())) {
         throw simple_sds::InvalidData("Invalid number of buckets");
     }

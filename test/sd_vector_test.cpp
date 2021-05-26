@@ -182,6 +182,33 @@ TYPED_TEST(sd_vector_test, multiset)
     ASSERT_EQ(sdv.successor(131), first_duplicate);
 }
 
+TYPED_TEST(sd_vector_test, overfull_multiset)
+{
+    // A multiset with more values than universe size.
+    std::vector<uint64_t> pos = { 0, 1, 1, 2, 2, 4, 5 };
+    sd_vector_builder builder(pos.back() + 1, pos.size(), true);
+    for (auto i : pos) {
+        builder.set(i);
+    }
+    TypeParam sdv(builder);
+    TypeParam second(pos.begin(), pos.end());
+
+    // Basic tests.
+    ASSERT_EQ(sdv.ones(), pos.size());
+    ASSERT_EQ(second.ones(), pos.size());
+    ASSERT_EQ(sdv.low.width(), 1);
+
+    // Iterate forward.
+    size_t expected = 0;
+    for (auto iter = sdv.one_begin(), second_iter = second.one_begin(); iter != sdv.one_end(); ++iter, ++second_iter) {
+        ASSERT_EQ(iter->first, expected);
+        ASSERT_EQ(iter->second, pos[expected]);
+        ASSERT_EQ(*iter, *second_iter);
+        expected++;
+    }
+    ASSERT_EQ(expected, pos.size());
+}
+
 TYPED_TEST(sd_vector_test, equality)
 {
     TypeParam original;
