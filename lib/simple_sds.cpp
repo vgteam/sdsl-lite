@@ -47,7 +47,7 @@ void load_data(char* buffer, size_t size, std::istream& in)
 
     size_t padding = padding_length(size);
     if (padding > 0) {
-        in.seekg(padding, std::ios_base::cur);
+        in.ignore(padding);
     }
 }
 
@@ -93,7 +93,8 @@ void empty_option(std::ostream& out)
 void skip_option(std::istream& in)
 {
     size_t size = load_value<size_t>(in);
-    in.seekg(size * sizeof(element_type), std::ios_base::cur);
+    // Seeking could be faster, but the stream might not be seekable.
+    in.ignore(size * sizeof(element_type));
 }
 
 size_t empty_option_size()
