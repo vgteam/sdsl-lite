@@ -444,11 +444,9 @@ class sd_vector
         //   DCC 2021.
         static std::pair<size_type, size_type> get_params(size_type universe, size_type ones)
         {
-            // Multisets may have more ones than universe size.
-            ones = std::min(ones, universe);
-
             size_type low_width = 1;
-            if (ones > 0) {
+            // Multisets with too many ones will have width 1.
+            if (ones > 0 && ones <= universe) {
                 double ideal_width = std::log2((static_cast<double>(universe) * std::log(2.0)) / static_cast<double>(ones));
                 low_width = std::round(std::max(ideal_width, 1.0));
             }
