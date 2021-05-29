@@ -381,9 +381,8 @@ inline uint32_t bits::_sel(uint64_t x, uint32_t i)
 inline uint32_t bits::hi(uint64_t x)
 {
 #if defined(__SSE4_2__) || defined(__aarch64__)
-    if (x == 0)
-        return 0;
-    return 63 - __builtin_clzll(x);
+    // The `| 1` allows us to avoid branching with 0.
+    return 63 - __builtin_clzll(x | 1);
 #else
     uint64_t t,tt; // temporaries
     if ((tt = x >> 32)) { // hi >= 32
