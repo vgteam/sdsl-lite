@@ -23,6 +23,8 @@ if(NOT EXISTS ${gtest_file})
             )
 endif(NOT EXISTS ${gtest_file})
 
+if(WITH_GOOGLETEST)
 add_subdirectory(googletest/googletest)
-
-
+else(WITH_GOOGLETEST)
+add_subdirectory(googletest/googletest EXCLUDE_FROM_ALL)
+endif(WITH_GOOGLETEST)
