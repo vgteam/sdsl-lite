@@ -210,7 +210,7 @@ class sd_one_iterator
             return *this;
         }
 
-        sd_one_iterator& operator++(int)
+        sd_one_iterator operator++(int)
         {
             sd_one_iterator result = *this;
             ++(*this);
@@ -226,7 +226,7 @@ class sd_one_iterator
             return *this;
         }
 
-        sd_one_iterator& operator--(int)
+        sd_one_iterator operator--(int)
         {
             sd_one_iterator result = *this;
             --(*this);
