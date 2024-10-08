@@ -7,7 +7,7 @@ As [SDSL 2](https://github.com/simongog/sdsl-lite) is no longer maintained, vgte
 
 ## Major changes
 
-* Switched from C++11 to C++14.
+* Switched from C++11 to C++17.
 * `sd_vector` improvements:
   * `sd_vector::one_iterator`: Iterator over set bits.
   * Predecessor and successor queries.
