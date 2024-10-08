@@ -49,8 +49,7 @@ Please report, if a test fails. Thanks.
 
 ## Acknowledgements
   We thank
-  * Project Gutenberg for providing text files `faust.txt` and
-    `zarathustra.txt`.
+  * Project Gutenberg for providing the text files `faust.txt`.
   * Shane Culpepper for providing the test inputs
     `keeper.int` and `moby.int` for the integer-alphabet CSAs and CSTs.
 

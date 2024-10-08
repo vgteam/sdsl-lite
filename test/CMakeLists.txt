@@ -1,23 +1,16 @@
 SET(sdsl_tests "")
 SET(generated_files "")
 
-FILE(STRINGS ${CMAKE_CURRENT_LIST_DIR}/download.config download_config_lines REGEX "^[^#].*")
-FOREACH(download_config_line ${download_config_lines})
-    LIST(GET download_config_line 0 download_file)
-    LIST(GET download_config_line 1 download_url)
-    STRING(REPLACE ".tar.gz" "" download_file_we ${download_file})
-    SET(abs_test_case_name ${CMAKE_CURRENT_LIST_DIR}/test_cases/${download_file_we})
-    
-    ADD_CUSTOM_COMMAND(OUTPUT ${abs_test_case_name}
-                      COMMAND ${CMAKE_COMMAND} -Ddownload_url=${download_url} -Dtest_case_dir=${CMAKE_CURRENT_LIST_DIR}/test_cases -P ${CMAKE_CURRENT_LIST_DIR}/download.cmake
-                      WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-                      COMMENT "Checking or downloading test case ${download_file}."
-                      VERBATIM
-    )
-    ADD_CUSTOM_TARGET(${download_file_we}
-                      DEPENDS ${abs_test_case_name})
-    LIST(APPEND generated_files ${abs_test_case_name})
-ENDFOREACH(download_config_line)
+FILE(GLOB ZIPPED_TEST_CASES ${CMAKE_CURRENT_LIST_DIR}/test_cases/*.tar.gz)
+FOREACH(zipped_test_case ${ZIPPED_TEST_CASES})
+    GET_FILENAME_COMPONENT(file_name ${zipped_test_case} NAME)
+    STRING(REPLACE ".tar.gz" "" file_name ${file_name})
+    IF(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/test_cases/${file_name}")
+        MESSAGE("Unzipping ${file_name}.")
+        EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E tar xzf ${zipped_test_case}
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/test_cases)
+    ENDIF()
+ENDFOREACH(zipped_test_case)
 
 
 FILE(GLOB SDSL_HEADER_ALL ${CMAKE_CURRENT_BINARY_DIR}/../include/sdsl/*.hpp)

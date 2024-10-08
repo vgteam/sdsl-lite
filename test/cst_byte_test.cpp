@@ -364,6 +364,14 @@ TYPED_TEST(cst_byte_test, child)
     }
 }
 
+template<class A, class B>
+::testing::Message&
+operator<<(::testing::Message& os, const pair<A,B>& p)
+{
+    os << "(" << p.first << "," << p.second << ")";
+    return os;
+}
+
 TYPED_TEST(cst_byte_test, edge)
 {
     TypeParam cst;

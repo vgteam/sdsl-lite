@@ -8,4 +8,6 @@
 !keeper.int
 !one_byte.txt
 !all_symbols.txt
+!faust.txt.tar.gz
+!moby.int.tar.gz
 !.gitignore
