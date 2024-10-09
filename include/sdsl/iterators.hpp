@@ -30,13 +30,19 @@ namespace sdsl
 /*! \tparam t_rac Type of random access container.
  */
 template<class t_rac>
-class random_access_const_iterator: public std::iterator<std::random_access_iterator_tag, typename t_rac::value_type, typename t_rac::difference_type>
+class random_access_const_iterator
 {
     public:
-        typedef typename t_rac::value_type  const_reference;
         typedef typename t_rac::size_type size_type;
+
+        using iterator_category = std::random_access_iterator_tag;
+        using value_type = typename t_rac::value_type;
+        using difference_type = typename t_rac::difference_type;
+        using pointer = value_type*;
+        using reference = value_type&;
+
+        typedef value_type const_reference;
         typedef random_access_const_iterator<t_rac> iterator;
-        typedef typename t_rac::difference_type difference_type;
 
     private:
         const t_rac* m_rac;// pointer to the random access container
@@ -178,6 +184,7 @@ struct random_access_container {
 #if __cplusplus >= 202002L
     typedef typename std::invoke_result<t_F, size_type>::type         value_type;
 #else
+    // Clang warns that std::result_of is deprecated but does not support std::invoke_result.
     typedef typename std::result_of<t_F(size_type)>::type         value_type;
 #endif
     typedef random_access_const_iterator<random_access_container> iterator_type;

@@ -116,7 +116,7 @@ TYPED_TEST(wt_int_test, load_and_move_and_rank)
     load_from_file(iv, test_file);
     TypeParam wt_load;
     ASSERT_TRUE(load_from_file(wt_load, temp_file));
-    TypeParam wt = move(wt_load);
+    TypeParam wt = std::move(wt_load);
     ASSERT_EQ(iv.size(), wt.size());
     tMII check_rank;
     for (size_type j=0; j < iv.size(); ++j) {
@@ -151,7 +151,7 @@ TYPED_TEST(wt_int_test, load_and_move_and_select)
     load_from_file(iv, test_file);
     TypeParam wt_load;
     ASSERT_TRUE(load_from_file(wt_load, temp_file));
-    TypeParam wt = move(wt_load);
+    TypeParam wt = std::move(wt_load);
     ASSERT_EQ(iv.size(), wt.size());
     tMII count;
     for (size_type j=0; j < iv.size(); ++j) {

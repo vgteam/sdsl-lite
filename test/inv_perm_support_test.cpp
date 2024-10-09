@@ -28,7 +28,9 @@ class inv_perm_support_test : public ::testing::Test
             for (size_t z=0; z < (1ULL<<20); z=(z+1)*2) {
                 sdsl::int_vector<> iv(z);
                 sdsl::util::set_to_id(iv);
-                random_shuffle(iv.begin(), iv.end());
+                std::random_device rd;
+                std::mt19937 rng(rd());
+                std::shuffle(iv.begin(), iv.end(), rng);
                 perms.emplace_back(iv);
             }
             for (size_t i=0; i<perms.size(); ++i) {

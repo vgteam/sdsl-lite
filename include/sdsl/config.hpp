@@ -56,6 +56,8 @@ template<uint8_t width>
 struct key_bwt_trait {
     static const char* KEY_BWT;
 };
+
+
 }
 
 #endif

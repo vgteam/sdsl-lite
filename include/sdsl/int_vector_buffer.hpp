@@ -487,12 +487,17 @@ class int_vector_buffer
                 }
         };
 
-        class iterator: public std::iterator<std::random_access_iterator_tag, value_type, difference_type, value_type*, reference>
+        class iterator
         {
             private:
                 int_vector_buffer<t_width>* m_ivb;
                 uint64_t m_idx = 0;
             public:
+                using iterator_category = std::random_access_iterator_tag;
+                using value_type = value_type;
+                using difference_type = difference_type;
+                using pointer = value_type*;
+                using reference = reference;
 
                 iterator() = delete;
                 iterator(int_vector_buffer<t_width>& ivb, uint64_t idx=0) : m_ivb(&ivb), m_idx(idx) {}
