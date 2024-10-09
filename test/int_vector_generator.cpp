@@ -1,17 +1,10 @@
 #include "sdsl/int_vector.hpp"
-#include <cstdlib>
 #include <iostream>
 #include <algorithm>
 #include <string>
 
 using namespace std;
 using namespace sdsl;
-
-ptrdiff_t myrandom(ptrdiff_t i)
-{
-    return rand()%i;
-}
-ptrdiff_t (*p_myrandom)(ptrdiff_t) = myrandom;
 
 int main(int argc, char* argv[])
 {
@@ -40,8 +33,8 @@ int main(int argc, char* argv[])
     }
     if (argc > 5) {
         unsigned long seed = stoul(argv[5]);
-        srand(seed);
-        random_shuffle(v.begin(), v.end(), p_myrandom);
+        std::mt19937_64 rng(seed);
+        std::shuffle(v.begin(), v.end(), rng);
     }
     store_to_file(v, argv[1]);
 }

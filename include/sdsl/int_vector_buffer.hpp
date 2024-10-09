@@ -494,10 +494,10 @@ class int_vector_buffer
                 uint64_t m_idx = 0;
             public:
                 using iterator_category = std::random_access_iterator_tag;
-                using value_type = value_type;
-                using difference_type = difference_type;
+                using value_type = typename int_vector_buffer<t_width>::value_type;
+                using difference_type = typename int_vector_buffer<t_width>::difference_type;
                 using pointer = value_type*;
-                using reference = reference;
+                using reference = typename int_vector_buffer<t_width>::reference;
 
                 iterator() = delete;
                 iterator(int_vector_buffer<t_width>& ivb, uint64_t idx=0) : m_ivb(&ivb), m_idx(idx) {}
