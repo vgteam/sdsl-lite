@@ -53,7 +53,16 @@ if [ $? != 0 ]; then
 	exit 1
 fi
 
-cmake -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX="${SDSL_INSTALL_PREFIX}" .. # run cmake 
+# Make sure a CC or CXX from an enclosing build can propagate to CMake
+EXTRA_CMAKE_ARGS=()
+if [[ ! -z "${CC}" ]] ; then
+    EXTRA_CMAKE_ARGS+=(-DCMAKE_C_COMPILER="${CC}")
+fi
+if [[ ! -z "${CXX}" ]] ; then
+    EXTRA_CMAKE_ARGS+=(-DCMAKE_CXX_COMPILER="${CXX}")
+fi
+
+cmake -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX="${SDSL_INSTALL_PREFIX}" "${EXTRA_CMAKE_ARGS[@]}" .. # run cmake 
 if [ $? != 0 ]; then
 	echo "ERROR: CMake build failed."
 	exit 1
