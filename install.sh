@@ -62,7 +62,7 @@ if [[ ! -z "${CXX}" ]] ; then
     EXTRA_CMAKE_ARGS+=(-DCMAKE_CXX_COMPILER="${CXX}")
 fi
 
-cmake -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX="${SDSL_INSTALL_PREFIX}" "${EXTRA_CMAKE_ARGS[@]}" .. # run cmake 
+cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX="${SDSL_INSTALL_PREFIX}" "${EXTRA_CMAKE_ARGS[@]}" .. # run cmake 
 if [ $? != 0 ]; then
 	echo "ERROR: CMake build failed."
 	exit 1
