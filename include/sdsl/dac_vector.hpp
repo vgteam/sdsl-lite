@@ -193,12 +193,10 @@ class dac_vector_dp
 
             // f[i][j] = minimum cost for subsequence with MSB >= i, when we can
             // use up to j levels.
-            double f[max_msb + 2][max_levels + 1];
-            int nxt[max_msb + 2][max_levels + 1];
-            std::fill(f[max_msb + 1], f[max_msb + 1] + max_levels + 1, 0.0);
-            std::fill(nxt[max_msb + 1], nxt[max_msb + 1] + max_levels + 1, -1);
+            std::vector<std::vector<double>> f(max_msb + 2, std::vector<double>(max_levels + 1, 0.0));
+            std::vector<std::vector<int>> nxt(max_msb + 2, std::vector<int>(max_levels + 1, -1));
             for (int b = max_msb; b >= 0; --b) {
-                std::fill(f[b], f[b] + max_levels + 1,
+                std::fill(f[b].begin(), f[b].end(),
                     std::numeric_limits<double>::infinity());
                 for (int lvl = 1; lvl <= max_levels; ++lvl) {
                     for (int b2 = b+1; b2 <= max_msb + 1; ++b2) {
