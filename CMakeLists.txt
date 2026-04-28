@@ -125,7 +125,7 @@ set(BUILD_EXAMPLES OFF CACHE BOOL "Do not build libdivsufsort example")
 set(BUILD_DIVSUFSORT64 ON CACHE BOOL "Build libdivsufsort in 64-bits mode")
 FetchContent_Declare(libdivsufsort
     GIT_REPOSITORY https://github.com/vgteam/libdivsufsort.git
-    GIT_TAG        3889213944fe968da5e84fe8587e4855c9c7693b
+    GIT_TAG        5ad79590572480e6d480703db99f070739f06961
     EXCLUDE_FROM_ALL
 )
 FetchContent_MakeAvailable(
@@ -165,7 +165,6 @@ add_library(sdsl STATIC
     lib/wt_helper.cpp
 )
 
-target_include_directories(sdsl PRIVATE ${libdivsufsort_BINARY_DIR}/include)
 target_include_directories(sdsl PUBLIC include)
 target_link_libraries(sdsl PRIVATE divsufsort divsufsort64)
 
