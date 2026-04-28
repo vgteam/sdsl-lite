@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
 include(AppendCompilerFlags)
+include(FetchContent)
 
 ## Project information ##
 project(sdsl CXX C)
@@ -117,8 +118,6 @@ else()
 endif()
 
 add_subdirectory(external)
-add_subdirectory(include)
-add_subdirectory(lib)
 
 # fetch CMake deps
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Do not build a shared library for libdivsufsort")
@@ -126,12 +125,49 @@ set(BUILD_EXAMPLES OFF CACHE BOOL "Do not build libdivsufsort example")
 set(BUILD_DIVSUFSORT64 ON CACHE BOOL "Build libdivsufsort in 64-bits mode")
 FetchContent_Declare(libdivsufsort
     GIT_REPOSITORY https://github.com/vgteam/libdivsufsort.git
-    GIT_TAG        f433deb20710e452d79df5022dd11205c586a18e
+    GIT_TAG        3889213944fe968da5e84fe8587e4855c9c7693b
     EXCLUDE_FROM_ALL
 )
 FetchContent_MakeAvailable(
     libdivsufsort
 )
+
+# make library
+add_library(sdsl STATIC
+    lib/bits.cpp
+    lib/bp_support_algorithm.cpp
+    lib/coder_elias_delta.cpp
+    lib/coder_elias_gamma.cpp
+    lib/coder_fibonacci.cpp
+    lib/config.cpp
+    lib/construct_config.cpp
+    lib/construct_isa.cpp
+    lib/construct_lcp.cpp
+    lib/construct_lcp_helper.cpp
+    lib/construct_sa.cpp
+    lib/construct_sa_se.cpp
+    lib/csa_alphabet_strategy.cpp
+    lib/io.cpp
+    lib/lcp_support_tree.cpp
+    lib/louds_tree.cpp
+    lib/memory_management.cpp
+    lib/nn_dict_dynamic.cpp
+    lib/ram_filebuf.cpp
+    lib/ram_fs.cpp
+    lib/rrr_vector_15.cpp
+    lib/sd_vector.cpp
+    lib/sfstream.cpp
+    lib/simple_sds.cpp
+    lib/structure_tree.cpp
+    lib/uint128_t.cpp
+    lib/uint256_t.cpp
+    lib/util.cpp
+    lib/wt_helper.cpp
+)
+
+target_include_directories(sdsl PRIVATE ${libdivsufsort_BINARY_DIR}/include)
+target_include_directories(sdsl PUBLIC include)
+target_link_libraries(sdsl PRIVATE divsufsort divsufsort64)
 
 ## Add doxygen documentation generation target ##
 find_package(Doxygen)
@@ -151,9 +187,6 @@ CONFIGURE_FILE(
   IMMEDIATE @ONLY)
 ADD_CUSTOM_TARGET(uninstall-sdsl
   "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/CMakeModules/cmake_uninstall.cmake")
-
-target_include_directories(sdsl PUBLIC include)
-target_link_libraries(sdsl PRIVATE divsufsort divsufsort64)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/sdsl-lite.pc.cmake"
                "${CMAKE_CURRENT_BINARY_DIR}/sdsl-lite.pc" @ONLY)
