@@ -120,6 +120,16 @@ add_subdirectory(external)
 add_subdirectory(include)
 add_subdirectory(lib)
 
+# fetch CMake deps
+FetchContent_Declare(libdivsufsort
+    GIT_REPOSITORY https://github.com/vgteam/libdivsufsort.git
+    GIT_TAG        f433deb20710e452d79df5022dd11205c586a18e
+    EXCLUDE_FROM_ALL
+)
+FetchContent_MakeAvailable(
+    libdivsufsort
+)
+
 ## Add doxygen documentation generation target ##
 find_package(Doxygen)
 if(GENERATE_DOC AND DOXYGEN_FOUND)
@@ -140,6 +150,7 @@ ADD_CUSTOM_TARGET(uninstall-sdsl
   "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/CMakeModules/cmake_uninstall.cmake")
 
 target_include_directories(sdsl PUBLIC include)
+target_link_libraries(sdsl PRIVATE divsufsort)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/sdsl-lite.pc.cmake"
                "${CMAKE_CURRENT_BINARY_DIR}/sdsl-lite.pc" @ONLY)
