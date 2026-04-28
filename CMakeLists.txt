@@ -121,6 +121,9 @@ add_subdirectory(include)
 add_subdirectory(lib)
 
 # fetch CMake deps
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Do not build a shared library for libdivsufsort")
+set(BUILD_EXAMPLES OFF CACHE BOOL "Do not build libdivsufsort example")
+set(BUILD_DIVSUFSORT64 ON CACHE BOOL "Build libdivsufsort in 64-bits mode")
 FetchContent_Declare(libdivsufsort
     GIT_REPOSITORY https://github.com/vgteam/libdivsufsort.git
     GIT_TAG        f433deb20710e452d79df5022dd11205c586a18e
@@ -150,7 +153,7 @@ ADD_CUSTOM_TARGET(uninstall-sdsl
   "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/CMakeModules/cmake_uninstall.cmake")
 
 target_include_directories(sdsl PUBLIC include)
-target_link_libraries(sdsl PRIVATE divsufsort)
+target_link_libraries(sdsl PRIVATE divsufsort divsufsort64)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/sdsl-lite.pc.cmake"
                "${CMAKE_CURRENT_BINARY_DIR}/sdsl-lite.pc" @ONLY)
