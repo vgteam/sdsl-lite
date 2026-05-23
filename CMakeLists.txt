@@ -166,7 +166,7 @@ add_library(sdsl STATIC
 )
 
 target_include_directories(sdsl PUBLIC include)
-target_link_libraries(sdsl PRIVATE divsufsort divsufsort64)
+target_link_libraries(sdsl PUBLIC divsufsort divsufsort64)
 
 ## Add doxygen documentation generation target ##
 find_package(Doxygen)
