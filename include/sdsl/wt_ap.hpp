@@ -22,9 +22,12 @@
 #ifndef INCLUDED_SDSL_WT_AP
 #define INCLUDED_SDSL_WT_AP
 
-#include <sdsl/bit_vectors.hpp>
-#include <sdsl/int_vector.hpp>
-#include <sdsl/vectors.hpp>
+#include "absl/log/absl_log.h"
+#include "bit_vectors.hpp"
+#include "int_vector.hpp"
+#include "vectors.hpp"
+#include "wm_int.hpp"
+#include "wt_huff.hpp"
 
 //! Namespace for the succinct data structure library.
 namespace sdsl
@@ -114,7 +117,7 @@ class wt_ap
         wt_ap(int_vector_buffer<int_width>& buf, size_type size) : m_size(size)
         {
             if (buf.size() < m_size) {
-                throw std::logic_error("n="+util::to_string(buf.size())+" < "+util::to_string(m_size)+"=m_size");
+                ABSL_LOG(FATAL) << "n="+util::to_string(buf.size())+" < "+util::to_string(m_size)+"=m_size";
                 return;
             }
 

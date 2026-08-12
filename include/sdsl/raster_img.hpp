@@ -1,7 +1,7 @@
 #ifndef SDSL_INC_RASTER_IMG
 #define SDSL_INC_RASTER_IMG
 
-#include <sdsl/bit_vectors.hpp>
+#include "bit_vectors.hpp"
 
 namespace sdsl
 {

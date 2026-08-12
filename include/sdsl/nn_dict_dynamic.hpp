@@ -22,8 +22,8 @@
 #ifndef INCLUDED_NN_DICT_DYNAMIC
 #define INCLUDED_NN_DICT_DYNAMIC
 
-#include <sdsl/int_vector.hpp>
-#include <sdsl/util.hpp>
+#include "int_vector.hpp"
+#include "util.hpp"
 
 namespace sdsl
 {

@@ -23,6 +23,7 @@
 
 #include <iterator>
 #include "suffix_array_helper.hpp"
+#include "csa_wt.hpp"
 
 namespace sdsl
 {

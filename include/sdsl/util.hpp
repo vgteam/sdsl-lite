@@ -21,6 +21,7 @@
 #ifndef INCLUDED_SDSL_UTIL
 #define INCLUDED_SDSL_UTIL
 
+#include "absl/log/absl_log.h"
 #include "bits.hpp"
 #include "sfstream.hpp"
 #include "ram_fs.hpp"
@@ -475,7 +476,7 @@ void util::set_to_value(t_int_vec& v, uint64_t k)
         return;
     uint8_t int_width = v.width();
     if (int_width == 0) {
-        throw std::logic_error("util::set_to_value can not be performed with int_width=0!");
+        ABSL_LOG(FATAL) << "util::set_to_value can not be performed with int_width=0!";
     }
     if (0 == k) {
         _set_zero_bits(v);

@@ -1,6 +1,7 @@
 #ifndef INCLUDED_SDSL_RLE_VECTOR
 #define INCLUDED_SDSL_RLE_VECTOR
 
+#include "absl/log/absl_log.h"
 #include <algorithm>
 #include <iostream>
 #include <stdexcept>
@@ -191,10 +192,10 @@ class rle_vector_builder
         {
             if (n == 0) { return; }
             if (i < this->tail()) {
-                throw std::runtime_error("rle_vector_builder::set(): the position is too small.");
+                ABSL_LOG(FATAL) << "rle_vector_builder::set(): the position is too small.";
             }
             if (i + n > this->size()) {
-                throw std::runtime_error("sd_vector_builder::set(): the position is too large.");
+                ABSL_LOG(FATAL) << "sd_vector_builder::set(): the position is too large.";
             }
             this->set_unsafe(i, n);
         }

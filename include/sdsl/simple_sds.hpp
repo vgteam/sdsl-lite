@@ -22,6 +22,7 @@
 #ifndef INCLUDED_SDSL_SIMPLE_SDS
 #define INCLUDED_SDSL_SIMPLE_SDS
 
+#include "absl/log/absl_log.h"
 #include <cstdint>
 #include <fstream>
 #include <iostream>
@@ -346,7 +347,7 @@ bool load_option(Serialize& value, std::istream& in)
         value.simple_sds_load(in);
         // Only do the sanity check if we got a valid starting offset.
         if (offset != -1 && static_cast<size_t>(in.tellg()) != expected) {
-            throw InvalidData("Incorrect size for an optional structure");
+            ABSL_LOG(FATAL) << "Incorrect size for an optional structure";
         }
         return true;
     }
@@ -382,7 +383,7 @@ void serialize_to(const Serialize& data, const std::string& filename)
     // The default error message can be uninformative.
     std::ofstream out(filename, std::ios_base::binary);
     if (!out) {
-        throw CannotOpenFile(filename, true);
+        ABSL_LOG(FATAL) << filename;
     }
 
     out.exceptions(std::ofstream::failbit | std::ofstream::badbit);
@@ -405,7 +406,7 @@ void load_from(Serialize& data, const std::string& filename)
     // The default error message can be uninformative.
     std::ifstream in(filename, std::ios_base::binary);
     if (!in) {
-        throw CannotOpenFile(filename, false);
+        ABSL_LOG(FATAL) << filename;
     }
 
     in.exceptions(std::ifstream::eofbit | std::ifstream::badbit | std::ifstream::failbit);

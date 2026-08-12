@@ -22,6 +22,7 @@
 #ifndef INCLUDED_SDSL_CONSTRUCT
 #define INCLUDED_SDSL_CONSTRUCT
 
+#include "absl/log/absl_log.h"
 #include "sdsl_concepts.hpp"
 #include "int_vector.hpp"
 #include "construct_lcp.hpp"
@@ -37,7 +38,7 @@ bool contains_no_zero_symbol(const int_vector& text, const std::string& file)
 {
     for (int_vector_size_type i=0; i < text.size(); ++i) {
         if ((uint64_t)0 == text[i]) {
-            throw std::logic_error(std::string("Error: File \"")+file+"\" contains zero symbol.");
+            ABSL_LOG(FATAL) << std::string("Error: File \"")+file+"\" contains zero symbol.";
             return false;
         }
     }

@@ -21,13 +21,14 @@
 #ifndef INCLUDED_SDSL_K2_TREE
 #define INCLUDED_SDSL_K2_TREE
 
+#include "absl/log/absl_log.h"
 #include <deque>
 #include <queue>
 #include <stdexcept>
 #include <tuple>
-#include "sdsl/bit_vectors.hpp"
-#include "sdsl/k2_tree_helper.hpp"
-#include "sdsl/int_vector_buffer.hpp"
+#include "bit_vectors.hpp"
+#include "k2_tree_helper.hpp"
+#include "int_vector_buffer.hpp"
 
 
 //! Namespace for the succint data structure library
@@ -283,7 +284,7 @@ class k2_tree
         k2_tree(const std::vector<std::vector<int>> &matrix)
         {
             if (matrix.size() < 1) {
-                throw std::logic_error("Matrix has no elements");
+                ABSL_LOG(FATAL) << "Matrix has no elements";
             }
             std::vector<bit_vector> t;
             k_k = k;

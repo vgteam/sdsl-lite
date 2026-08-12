@@ -1,7 +1,7 @@
 #ifndef INCLUDED_SDSL_CONSTRUCT_LCP_HELPER
 #define INCLUDED_SDSL_CONSTRUCT_LCP_HELPER
 
-#include "sdsl/int_vector.hpp"
+#include "int_vector.hpp"
 #include <queue>
 #include <list>
 #include <vector>

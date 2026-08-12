@@ -1,3 +1,4 @@
+#include "absl/log/absl_log.h"
 #include "sdsl/simple_sds.hpp"
 #include "sdsl/int_vector.hpp"
 #include "sdsl/sd_vector.hpp"
@@ -32,7 +33,7 @@ struct ByteArray
         size_t real_sum = 0;
         for (auto value : this->bytes) { real_sum += value; }
         if (real_sum != this->sum) {
-            throw simple_sds::InvalidData("Incorrect sum");
+            ABSL_LOG(FATAL) << "Incorrect sum";
         }
     }
 
