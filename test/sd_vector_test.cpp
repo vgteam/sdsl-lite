@@ -275,6 +275,10 @@ TYPED_TEST(sd_vector_test, empty_one_iterator)
     ASSERT_EQ(sdv.successor(0), sdv.one_end());
 }
 
+#ifndef SDSL_NO_EXCEPTIONS
+// With SDSL_NO_EXCEPTIONS, these failure paths report through SDSL_THROW's
+// non-throwing branch (see error_handling.hpp), which cannot be caught by
+// ASSERT_THROW, so there is nothing left here to check in that build.
 TYPED_TEST(sd_vector_test, builder_exceptions)
 {
     {
@@ -311,6 +315,7 @@ TYPED_TEST(sd_vector_test, builder_exceptions)
         ASSERT_THROW(TypeParam{builder}, std::runtime_error);
     }
 }
+#endif
 
 } // end namespace
 

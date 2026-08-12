@@ -21,7 +21,7 @@
 #ifndef INCLUDED_SDSL_IO
 #define INCLUDED_SDSL_IO
 
-#include "absl/log/absl_log.h"
+#include "error_handling.hpp"
 #include "util.hpp"
 #include "sdsl_concepts.hpp"
 #include "structure_tree.hpp"
@@ -203,8 +203,8 @@ bool load_vector_from_file(t_int_vec& v, const std::string& file, uint8_t num_by
             return true;
         }
         if (file_size % num_bytes != 0) {
-            ABSL_LOG(FATAL) << "file size "+util::to_string(file_size)+" of \""+ file
-                                   +"\" is not a multiple of "+util::to_string(num_bytes);
+            SDSL_THROW(std::logic_error, "file size "+util::to_string(file_size)+" of \""+ file
+                                   +"\" is not a multiple of "+util::to_string(num_bytes));
             return false;
         }
         isfstream in(file, std::ios::in | std::ios::binary);

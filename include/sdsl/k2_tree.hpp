@@ -21,7 +21,7 @@
 #ifndef INCLUDED_SDSL_K2_TREE
 #define INCLUDED_SDSL_K2_TREE
 
-#include "absl/log/absl_log.h"
+#include "error_handling.hpp"
 #include <deque>
 #include <queue>
 #include <stdexcept>
@@ -284,7 +284,7 @@ class k2_tree
         k2_tree(const std::vector<std::vector<int>> &matrix)
         {
             if (matrix.size() < 1) {
-                ABSL_LOG(FATAL) << "Matrix has no elements";
+                SDSL_THROW(std::logic_error, "Matrix has no elements");
             }
             std::vector<bit_vector> t;
             k_k = k;

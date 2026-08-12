@@ -21,7 +21,7 @@
 #ifndef INCLUDED_SDSL_INT_VECTOR
 #define INCLUDED_SDSL_INT_VECTOR
 
-#include "absl/log/absl_log.h"
+#include "error_handling.hpp"
 #include "bits.hpp"
 #include "structure_tree.hpp"
 #include "util.hpp"
@@ -328,7 +328,16 @@ class int_vector
         size_type      m_size;  //!< Number of bits needed to store int_vector.
         uint64_t*      m_data;  //!< Pointer to the memory for the bits.
         int_width_type m_width; //!< Width of the integers.
-        bool shared_memory_flag; //!< True if the data is loaded from shared memory.
+#ifdef SDSL_ENABLE_SHARED_MEMORY
+        // True if m_data points into memory (e.g. a Boost.Interprocess shared
+        // memory segment) that this int_vector did not allocate through
+        // memory_manager and therefore must not free or reallocate; see the
+        // (size, int_width, data, loaded_from_shared_memory) constructor
+        // below. Only present when SDSL_ENABLE_SHARED_MEMORY is defined, so
+        // that int_vector's layout and behavior are completely unchanged
+        // when the feature is off.
+        bool shared_memory_flag;
+#endif
 
     public:
 
@@ -342,17 +351,32 @@ class int_vector
         int_vector(size_type size, value_type default_value,
                    uint8_t int_width = t_width);
 
-        //! Alternative constructor for int_vector with data loaded from shared memory.
-        /*! \param size          Number of elements. Default value is 0.
-            \param default_value Initialize all value to `default value`.
+#ifdef SDSL_ENABLE_SHARED_MEMORY
+        //! Wraps existing raw data (e.g. from a Boost.Interprocess shared
+        //! memory segment) as an int_vector, without allocating or copying.
+        /*! \param size          Number of elements, matching the
+                                  (size, default_value, int_width)
+                                  constructor above (this constructor stores
+                                  `size * int_width` into the bit count
+                                  bit_size() reports, not `size` itself).
             \param int_width     The width of each integer.
-            \param data           Pointer to the raw data of the uint64_t.
-            \param loaded_from_shared_memory  Flag indicating if the data is loaded from shared memory.
+            \param data          Pointer to `size * int_width` bits' worth
+                                  of existing uint64_t words. This
+                                  int_vector does not take ownership: the
+                                  caller must keep the memory alive for as
+                                  long as this int_vector (or anything
+                                  moved/swapped from it) exists, and is
+                                  responsible for freeing it afterward.
+            \param loaded_from_shared_memory  Must be `true`; marks this
+                                  instance as non-owning, so the destructor
+                                  and bit_resize() leave `data` alone instead
+                                  of treating it as memory_manager-allocated.
          */
         int_vector(size_type size,
                 uint8_t int_width,
                 uint64_t* data,
                 bool loaded_from_shared_memory);
+#endif
 
         //! Constructor to fix possible comparison with integeres issue.
         explicit int_vector(size_type size = 0) : int_vector(size, static_cast<value_type>(0), t_width) {
@@ -378,11 +402,15 @@ class int_vector
         //! Destructor.
         ~int_vector();
 
-        //! Get the flag indicating if the data is loaded from shared memory.
+#ifdef SDSL_ENABLE_SHARED_MEMORY
+        //! True if this int_vector wraps externally-owned memory (see the
+        //! (size, int_width, data, loaded_from_shared_memory) constructor)
+        //! rather than memory it allocated itself.
         bool loaded_from_shared_memory() const
         {
             return shared_memory_flag;
         }
+#endif
 
         //! Equivalent to size() == 0.
         bool empty() const
@@ -1307,24 +1335,34 @@ operator<<(std::ostream& os, const t_bv& bv)
 
 template<uint8_t t_width>
 inline int_vector<t_width>::int_vector(size_type size, value_type default_value, uint8_t intWidth):
-    m_size(0), m_data(nullptr), m_width(t_width), shared_memory_flag(false)
+    m_size(0), m_data(nullptr), m_width(t_width)
+#ifdef SDSL_ENABLE_SHARED_MEMORY
+    , shared_memory_flag(false)
+#endif
 {
     width(intWidth);
     resize(size);
     util::set_to_value(*this, default_value); // new initialization
 }
 
+#ifdef SDSL_ENABLE_SHARED_MEMORY
 template<uint8_t t_width>
-inline int_vector<t_width>::int_vector(size_type size,  uint8_t int_width, uint64_t* data, bool loaded_from_shared_memory){
-    this->m_size = size;
-    this->m_data = data;
-    this->m_width = int_width;
-    this->shared_memory_flag = loaded_from_shared_memory;
-};
+inline int_vector<t_width>::int_vector(size_type size, uint8_t int_width, uint64_t* data, bool loaded_from_shared_memory):
+    // m_size is a bit count everywhere else in this class (see bit_size(),
+    // capacity()), not the element count `size` names here, so it has to be
+    // size * int_width -- not the raw `size` -- for size()/capacity() to
+    // agree with a normal int_vector holding the same elements.
+    m_size(size * int_width), m_data(data), m_width(int_width), shared_memory_flag(loaded_from_shared_memory)
+{
+}
+#endif
 
 template<uint8_t t_width>
 inline int_vector<t_width>::int_vector(int_vector&& v) :
-    m_size(v.m_size), m_data(v.m_data), m_width(v.m_width), shared_memory_flag(v.loaded_from_shared_memory())
+    m_size(v.m_size), m_data(v.m_data), m_width(v.m_width)
+#ifdef SDSL_ENABLE_SHARED_MEMORY
+    , shared_memory_flag(v.loaded_from_shared_memory())
+#endif
 {
     v.m_data = nullptr; // ownership of v.m_data now transferred
     v.m_size = 0;
@@ -1332,12 +1370,20 @@ inline int_vector<t_width>::int_vector(int_vector&& v) :
 
 template<uint8_t t_width>
 inline int_vector<t_width>::int_vector(const int_vector& v):
-    m_size(0), m_data(nullptr), m_width(v.m_width), shared_memory_flag(v.loaded_from_shared_memory())
+    m_size(0), m_data(nullptr), m_width(v.m_width)
+#ifdef SDSL_ENABLE_SHARED_MEMORY
+    // A copy is always a fresh, independently-owned int_vector, never a
+    // second non-owning view of whatever v happens to wrap: propagating
+    // v's flag here would make bit_resize() below skip allocating m_data
+    // (see bit_resize()), leaving it null while the memcpy below still
+    // writes through it.
+    , shared_memory_flag(false)
+#endif
 {
     bit_resize(v.bit_size());
     if (v.capacity() > 0) {
         if (memcpy(m_data, v.data() ,v.capacity()/8)==nullptr) {
-            ABSL_LOG(FATAL) << "BAD_ALLOC"; // LCOV_EXCL_LINE
+            SDSL_THROW_BAD_ALLOC(); // LCOV_EXCL_LINE
         }
     }
     width(v.m_width);
@@ -1347,10 +1393,26 @@ template<uint8_t t_width>
 int_vector<t_width>& int_vector<t_width>::operator=(const int_vector& v)
 {
     if (this != &v) {// if v is not the same object
+#ifdef SDSL_ENABLE_SHARED_MEMORY
+        // As in the copy constructor above: assigning always makes this
+        // int_vector an independent, owned copy. If it was previously a
+        // non-owning view (shared_memory_flag true), m_data was never
+        // memory_manager's to begin with, so it must not be passed to
+        // bit_resize()/memory_manager::resize() at all -- drop it here
+        // (without freeing it, since we never owned it) so bit_resize()
+        // allocates fresh, correctly-sized storage instead of either
+        // silently no-op'ing (leaving a stale/undersized buffer for the
+        // memcpy below to overrun) or reallocating memory it doesn't own.
+        if (loaded_from_shared_memory()) {
+            m_data = nullptr;
+            m_size = 0;
+            shared_memory_flag = false;
+        }
+#endif
         bit_resize(v.bit_size());
         if (v.bit_size()>0) {
             if (memcpy(m_data, v.data() ,v.capacity()/8)==nullptr) {
-                ABSL_LOG(FATAL) << "BAD_ALLOC"; // LCOV_EXCL_LINE
+                SDSL_THROW_BAD_ALLOC(); // LCOV_EXCL_LINE
             }
         }
         width(v.width());
@@ -1369,9 +1431,10 @@ int_vector<t_width>& int_vector<t_width>::operator=(int_vector&& v)
 template<uint8_t t_width>
 int_vector<t_width>::~int_vector()
 {
-    if (loaded_from_shared_memory() == false) {
-        memory_manager::clear(*this);
-    }
+#ifdef SDSL_ENABLE_SHARED_MEMORY
+    if (loaded_from_shared_memory()) { return; }
+#endif
+    memory_manager::clear(*this);
 }
 
 template<uint8_t t_width>
@@ -1381,24 +1444,31 @@ void int_vector<t_width>::swap(int_vector& v)
         size_type size     = m_size;
         uint64_t* data     = m_data;
         uint8_t  int_width = m_width;
+#ifdef SDSL_ENABLE_SHARED_MEMORY
         bool shared_memory_flag_ = shared_memory_flag;
+#endif
         m_size   = v.m_size;
         m_data   = v.m_data;
         width(v.m_width);
+#ifdef SDSL_ENABLE_SHARED_MEMORY
         this->shared_memory_flag = v.shared_memory_flag;
+#endif
         v.m_size = size;
         v.m_data = data;
         v.width(int_width);
+#ifdef SDSL_ENABLE_SHARED_MEMORY
         v.shared_memory_flag = shared_memory_flag_;
+#endif
     }
 }
 
 template<uint8_t t_width>
 void int_vector<t_width>::bit_resize(const size_type size)
 {
-    if (loaded_from_shared_memory() == false) {
-        memory_manager::resize(*this, size);
-    }
+#ifdef SDSL_ENABLE_SHARED_MEMORY
+    if (loaded_from_shared_memory()) { return; }
+#endif
+    memory_manager::resize(*this, size);
 }
 
 template<uint8_t t_width>
@@ -1406,10 +1476,10 @@ auto int_vector<t_width>::get_int(size_type idx, const uint8_t len)const -> valu
 {
 #ifdef SDSL_DEBUG
     if (idx+len > m_size) {
-        ABSL_LOG(FATAL) << "OUT_OF_RANGE_ERROR: int_vector::get_int(size_type, uint8_t; idx+len > size()!";
+        SDSL_THROW(std::out_of_range, "OUT_OF_RANGE_ERROR: int_vector::get_int(size_type, uint8_t); idx+len > size()!");
     }
     if (len > 64) {
-        ABSL_LOG(FATAL) << "OUT_OF_RANGE_ERROR: int_vector::get_int(size_type, uint8_t; len>64!";
+        SDSL_THROW(std::out_of_range, "OUT_OF_RANGE_ERROR: int_vector::get_int(size_type, uint8_t); len>64!");
     }
 #endif
     return bits::read_int(m_data+(idx>>6), idx&0x3F, len);
@@ -1420,10 +1490,10 @@ inline void int_vector<t_width>::set_int(size_type idx, value_type x, const uint
 {
 #ifdef SDSL_DEBUG
     if (idx+len > m_size) {
-        ABSL_LOG(FATAL) << "OUT_OF_RANGE_ERROR: int_vector::set_int(size_type, uint8_t; idx+len > size()!";
+        SDSL_THROW(std::out_of_range, "OUT_OF_RANGE_ERROR: int_vector::set_int(size_type, uint8_t); idx+len > size()!");
     }
     if (len > 64) {
-        ABSL_LOG(FATAL) << "OUT_OF_RANGE_ERROR: int_vector::set_int(size_type, uint8_t; len>64!";
+        SDSL_THROW(std::out_of_range, "OUT_OF_RANGE_ERROR: int_vector::set_int(size_type, uint8_t); len>64!");
     }
 #endif
     bits::write_int(m_data+(idx>>6), x, idx&0x3F, len);
@@ -1708,13 +1778,13 @@ void int_vector<t_width>::simple_sds_load(std::istream& in)
         size_t bits = simple_sds::load_value<size_t>(in);
         size_t elements = simple_sds::load_value<size_t>(in);
         if (width < 1 || width > 64) {
-            ABSL_LOG(FATAL) << "Width must be between 1 and 64 bits";
+            SDSL_THROW(simple_sds::InvalidData, "Width must be between 1 and 64 bits");
         }
         if (length * width != bits) {
-            ABSL_LOG(FATAL) << "Bit length does not match length * width";
+            SDSL_THROW(simple_sds::InvalidData, "Bit length does not match length * width");
         }
         if (elements != simple_sds::bits_to_elements(bits)) {
-            ABSL_LOG(FATAL) << "Bit length / word length mismatch";
+            SDSL_THROW(simple_sds::InvalidData, "Bit length / word length mismatch");
         }
         int_vector_trait<t_width>::set_width(width, this->m_width);
         this->resize(length);
@@ -1725,10 +1795,10 @@ void int_vector<t_width>::simple_sds_load(std::istream& in)
         size_t bits = simple_sds::load_value<size_t>(in);
         size_t elements = simple_sds::load_value<size_t>(in);
         if (ones > bits) {
-            ABSL_LOG(FATAL) << "Too many set bits";
+            SDSL_THROW(simple_sds::InvalidData, "Too many set bits");
         }
         if (elements != simple_sds::bits_to_elements(bits)) {
-            ABSL_LOG(FATAL) << "Bit length / word length mismatch";
+            SDSL_THROW(simple_sds::InvalidData, "Bit length / word length mismatch");
         }
         this->resize(bits);
         simple_sds::load_data(reinterpret_cast<char*>(this->m_data), this->capacity() / 8, in);

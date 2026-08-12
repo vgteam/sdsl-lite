@@ -27,6 +27,41 @@ option(CODE_COVERAGE "Set ON to add code coverage compile options" OFF)
 option(GENERATE_DOC "Set ON to generate doxygen API reference in build/doc directory" OFF)
 option(WITH_GOOGLETEST "Set ON to install google test along with the library" ON)
 
+# By default, sdsl-lite reports fatal errors by throwing C++ exceptions, as
+# it always has. Some embedders (e.g. Google's DeepVariant, which builds
+# with Bazel and -fno-exceptions) need a build that never throws instead.
+option(SDSL_USE_EXCEPTIONS "Report fatal errors by throwing C++ exceptions" ON)
+# When exceptions are off, fatal errors are reported through Abseil's
+# ABSL_LOG(FATAL) if this is on, or through stderr + std::abort() if it is
+# off. It has no effect when SDSL_USE_EXCEPTIONS is on.
+option(SDSL_USE_ABSEIL_LOGGING "Use Abseil logging to report fatal errors when exceptions are off" OFF)
+
+if(NOT SDSL_USE_EXCEPTIONS)
+    message("sdsl-lite: building without C++ exceptions")
+    if(SDSL_USE_ABSEIL_LOGGING)
+        find_package(absl REQUIRED)
+        message("sdsl-lite: fatal errors reported via Abseil ABSL_LOG(FATAL)")
+    else()
+        message("sdsl-lite: fatal errors reported via stderr and std::abort()")
+    endif()
+endif()
+
+# int_vector normally always allocates and owns its own memory. Turning this
+# on adds an additional int_vector constructor (see include/sdsl/int_vector.hpp)
+# that instead wraps a caller-supplied uint64_t buffer -- e.g. one obtained
+# from a Boost.Interprocess shared memory segment -- without copying or
+# taking ownership of it, plus the sdsl::shared_memory_int_vector helpers
+# (see include/sdsl/shared_memory_int_vector.hpp) that place an int_vector's
+# bits into such a segment under a name a separate process can attach to.
+# Off by default because it changes int_vector's memory layout (an extra
+# bool member) and requires Boost; on, everything about int_vector's default
+# (owning) behavior is unchanged.
+option(SDSL_ENABLE_SHARED_MEMORY "Enable int_vector's shared-memory-wrapping constructor and the shared_memory_int_vector helpers, backed by Boost.Interprocess" OFF)
+if(SDSL_ENABLE_SHARED_MEMORY)
+    find_package(Boost REQUIRED)
+    message("sdsl-lite: Boost found, shared-memory int_vector support enabled")
+endif()
+
 # C++17 compiler Check
 if(CMAKE_CXX_COMPILER MATCHES ".*clang.*" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
       set(CMAKE_COMPILER_IS_CLANGXX 1)
@@ -140,6 +175,23 @@ ADD_CUSTOM_TARGET(uninstall-sdsl
   "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/CMakeModules/cmake_uninstall.cmake")
 
 target_include_directories(sdsl PUBLIC include)
+
+# pkg-config consumers don't see the sdsl CMake target's PUBLIC compile
+# definitions (see lib/CMakeLists.txt), so -- same reasoning as there, since
+# sdsl-lite's headers are what actually read these defines -- Cflags needs
+# to carry them explicitly, or a pkg-config consumer built without
+# redeclaring these flags by hand would silently disagree with how libsdsl
+# itself was compiled.
+set(SDSL_PC_CFLAGS_EXTRA "")
+if(NOT SDSL_USE_EXCEPTIONS)
+    string(APPEND SDSL_PC_CFLAGS_EXTRA " -DSDSL_NO_EXCEPTIONS")
+    if(SDSL_USE_ABSEIL_LOGGING)
+        string(APPEND SDSL_PC_CFLAGS_EXTRA " -DSDSL_USE_ABSEIL_LOGGING")
+    endif()
+endif()
+if(SDSL_ENABLE_SHARED_MEMORY)
+    string(APPEND SDSL_PC_CFLAGS_EXTRA " -DSDSL_ENABLE_SHARED_MEMORY")
+endif()
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/sdsl-lite.pc.cmake"
                "${CMAKE_CURRENT_BINARY_DIR}/sdsl-lite.pc" @ONLY)

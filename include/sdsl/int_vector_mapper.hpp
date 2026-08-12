@@ -1,7 +1,7 @@
 #ifndef SDSL_INT_VECTOR_MAPPER
 #define SDSL_INT_VECTOR_MAPPER
 
-#include "absl/log/absl_log.h"
+#include "error_handling.hpp"
 #include "int_vector.hpp"
 #include "memory_management.hpp"
 
@@ -135,8 +135,8 @@ class int_vector_mapper
             {
                 std::ifstream f(filename,std::ifstream::binary);
                 if (!f.is_open()) {
-                    ABSL_LOG(FATAL) << 
-                        "int_vector_mapper: file does not exist.";
+                    SDSL_THROW(std::runtime_error,
+                        "int_vector_mapper: file does not exist.");
                 }
                 if (!is_plain) {
                     int_vector<t_width>::read_header(size_in_bits, int_width, f);
@@ -148,14 +148,14 @@ class int_vector_mapper
                 m_data_offset = t_width ? 8 : 9;
             } else {
                 if (8 != t_width and 16 != t_width and 32 != t_width and 64 != t_width) {
-                    ABSL_LOG(FATAL) << "int_vector_mapper: plain vector can "
-                                             "only be of width 8, 16, 32, 64.";
+                    SDSL_THROW(std::runtime_error, "int_vector_mapper: plain vector can "
+                                             "only be of width 8, 16, 32, 64.");
                 } else {
                     uint8_t byte_width = t_width/8;
                     // if( m_file_size_bytes % (t_width/8) != 0)
                     if ((m_file_size_bytes & bits::lo_set[bits::cnt(byte_width-1)]) != 0) {
-                        ABSL_LOG(FATAL) << "int_vector_mapper: plain vector not a multiple of byte: "
-                                                 +std::to_string(m_file_size_bytes)+" mod "+std::to_string(byte_width)+" != 0";
+                        SDSL_THROW(std::runtime_error, "int_vector_mapper: plain vector not a multiple of byte: "
+                                                 +std::to_string(m_file_size_bytes)+" mod "+std::to_string(byte_width)+" != 0");
                     }
                 }
                 size_in_bits = m_file_size_bytes * 8;
@@ -168,7 +168,7 @@ class int_vector_mapper
                 std::string open_error
                     = std::string("int_vector_mapper: open file error.")
                       + std::string(util::str_from_errno());
-                ABSL_LOG(FATAL) << open_error;
+                SDSL_THROW(std::runtime_error, open_error);
             }
 
             // prepare for mmap
@@ -179,7 +179,7 @@ class int_vector_mapper
                 std::string mmap_error
                     = std::string("int_vector_mapper: mmap error. ")
                       + std::string(util::str_from_errno());
-                ABSL_LOG(FATAL) << mmap_error;
+                SDSL_THROW(std::runtime_error, mmap_error);
             }
 
             m_wrapper.m_size = size_in_bits;
@@ -215,7 +215,7 @@ class int_vector_mapper
                     std::string truncate_error
                         = std::string("int_vector_mapper: truncate error. ")
                           + std::string(util::str_from_errno());
-                    ABSL_LOG(FATAL) << truncate_error;
+                    SDSL_THROW(std::runtime_error, truncate_error);
                 }
                 m_file_size_bytes = new_size_in_bytes + m_data_offset;
 
@@ -225,7 +225,7 @@ class int_vector_mapper
                     std::string mmap_error
                         = std::string("int_vector_mapper: mmap error. ")
                           + std::string(util::str_from_errno());
-                    ABSL_LOG(FATAL) << mmap_error;
+                    SDSL_THROW(std::runtime_error, mmap_error);
                 }
 
                 // update wrapper
@@ -347,13 +347,13 @@ class temp_file_buffer
 #ifdef MSVC_COMPILER
             auto ret = GetTempFileName(dir.c_str(),"tmp_mapper_file_", 0 ,tmp_file_name);
             if (ret == 0) {
-                ABSL_LOG(FATAL) << "could not create temporary file.";
+                SDSL_THROW(std::runtime_error, "could not create temporary file.");
             }
 #else
             sprintf(tmp_file_name, "%s/tmp_mapper_file_%lu_XXXXXX.sdsl",dir.c_str(),util::pid());
             int fd = mkstemps(tmp_file_name,5);
             if (fd == -1) {
-                ABSL_LOG(FATAL) << "could not create temporary file.";
+                SDSL_THROW(std::runtime_error, "could not create temporary file.");
             }
             close(fd);
 #endif

@@ -22,7 +22,7 @@
 #ifndef INCLUDED_SDSL_CONSTRUCT_SA
 #define INCLUDED_SDSL_CONSTRUCT_SA
 
-#include "absl/log/absl_log.h"
+#include "error_handling.hpp"
 #include "config.hpp"
 #include "int_vector.hpp"
 
@@ -100,7 +100,7 @@ void calculate_sa(const unsigned char* c, typename int_vector<fixedIntWidth>::si
             }
         } else {
             if (sa.width() < bits::hi(len)+1) {
-                ABSL_LOG(FATAL) << "width of int_vector is to small for the text!!!";
+                SDSL_THROW(std::logic_error, "width of int_vector is to small for the text!!!");
             }
             int_vector<> sufarray(len,0,32);
             divsufsort(c, (int32_t*)sufarray.data(), len);

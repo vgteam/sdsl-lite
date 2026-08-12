@@ -1,4 +1,4 @@
-#include "absl/log/absl_log.h"
+#include "sdsl/error_handling.hpp"
 #include <chrono>
 #include <algorithm>
 #include "sdsl/memory_management.hpp"
@@ -349,7 +349,7 @@ hugepage_allocator::hsbrk(size_t size)
 {
     ptrdiff_t left = (ptrdiff_t) m_total_size - (m_top - m_base);
     if (left < (ptrdiff_t) size) {  // enough space left?
-        ABSL_LOG(FATAL) <<"hugepage_allocator: not enough hugepage memory available";
+        SDSL_THROW_ERRNO("hugepage_allocator: not enough hugepage memory available");
     }
     uint8_t* new_mem = m_top;
     m_top += size;
@@ -638,7 +638,7 @@ hugepage_allocator::determine_available_hugepage_memory()
         }
         size_in_bytes = page_size_in_bytes*num_free_pages;
     } else {
-        ABSL_LOG(FATAL) << "hugepage_allocator could not automatically determine available hugepages";
+        SDSL_THROW_ERRNO("hugepage_allocator could not automatically determine available hugepages");
     }
     return size_in_bytes;
 }

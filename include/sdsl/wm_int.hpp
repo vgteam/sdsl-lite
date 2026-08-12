@@ -22,7 +22,7 @@
 #ifndef INCLUDED_SDSL_WM_INT
 #define INCLUDED_SDSL_WM_INT
 
-#include "absl/log/absl_log.h"
+#include "error_handling.hpp"
 #include "sdsl_concepts.hpp"
 #include "int_vector.hpp"
 #include "rank_support_v.hpp"
@@ -142,7 +142,7 @@ class wm_int
                 return;
             size_type n = buf.size();  // set n
             if (n < m_size) {
-                ABSL_LOG(FATAL) << "n="+util::to_string(n)+" < "+util::to_string(m_size)+"=m_size";
+                SDSL_THROW(std::logic_error, "n="+util::to_string(n)+" < "+util::to_string(m_size)+"=m_size");
                 return;
             }
             m_sigma = 0; // init sigma
