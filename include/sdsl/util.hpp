@@ -476,7 +476,7 @@ void util::set_to_value(t_int_vec& v, uint64_t k)
         return;
     uint8_t int_width = v.width();
     if (int_width == 0) {
-        SDSL_THROW(std::logic_error, "util::set_to_value can not be performed with int_width=0!");
+        SDSL_THROW(std::logic_error("util::set_to_value can not be performed with int_width=0!"));
     }
     if (0 == k) {
         _set_zero_bits(v);

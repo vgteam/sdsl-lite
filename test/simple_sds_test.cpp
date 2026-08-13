@@ -33,7 +33,7 @@ struct ByteArray
         size_t real_sum = 0;
         for (auto value : this->bytes) { real_sum += value; }
         if (real_sum != this->sum) {
-            SDSL_THROW(simple_sds::InvalidData, "Incorrect sum");
+            SDSL_THROW(simple_sds::InvalidData("Incorrect sum"));
         }
     }
 

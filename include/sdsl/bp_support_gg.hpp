@@ -145,7 +145,7 @@ class bp_support_gg
 
             m_pioneer_bp.resize(m_nnd.ones());
             if (m_nnd.ones() > 0  and m_nnd.ones() == m_bp->size()) { // m_bp != nullptr see above
-                SDSL_THROW(std::logic_error, util::demangle(typeid(this).name())+": recursion in the construction does not terminate!");
+                SDSL_THROW(std::logic_error(util::demangle(typeid(this).name())+": recursion in the construction does not terminate!"));
             }
 
             for (size_type i=1; i<= m_nnd.ones(); ++i) {

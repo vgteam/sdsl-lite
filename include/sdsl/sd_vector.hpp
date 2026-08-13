@@ -123,13 +123,13 @@ class sd_vector_builder
         void set(size_type i)
         {
             if (m_items >= m_capacity) {
-                SDSL_THROW(std::runtime_error, "sd_vector_builder::set(): the builder is already full.");
+                SDSL_THROW(std::runtime_error("sd_vector_builder::set(): the builder is already full."));
             }
             if (i < m_tail) {
-                SDSL_THROW(std::runtime_error, "sd_vector_builder::set(): the position is too small.");
+                SDSL_THROW(std::runtime_error("sd_vector_builder::set(): the position is too small."));
             }
             if (i >= m_size) {
-                SDSL_THROW(std::runtime_error, "sd_vector_builder::set(): the position is too large.");
+                SDSL_THROW(std::runtime_error("sd_vector_builder::set(): the position is too large."));
             }
             this->set_unsafe(i);
         }
@@ -386,7 +386,7 @@ class sd_vector
                 return;
             }
             if (! std::is_sorted(begin,end)) {
-                SDSL_THROW(std::runtime_error, "sd_vector: source list is not sorted.");
+                SDSL_THROW(std::runtime_error("sd_vector: source list is not sorted."));
             }
 
             size_type m = std::distance(begin,end);
@@ -423,7 +423,7 @@ class sd_vector
         sd_vector(builder_type& builder)
         {
             if (builder.items() != builder.capacity()) {
-                SDSL_THROW(std::runtime_error, "sd_vector: builder is not at full capacity.");
+                SDSL_THROW(std::runtime_error("sd_vector: builder is not at full capacity."));
             }
 
             m_size = builder.m_size;
@@ -647,7 +647,7 @@ class sd_vector
          *  NOTE: simple-sds serialization has only been implemented for the default template parameters.
          */
         void simple_sds_serialize(std::ostream& out) const {
-            SDSL_THROW(std::logic_error, "simple-sds serialization has not been implemented for these template parameters");
+            SDSL_THROW(std::logic_error("simple-sds serialization has not been implemented for these template parameters"));
         }
 
         //! Loads the vector to a stream in the simple-sds format.
@@ -658,14 +658,14 @@ class sd_vector
          *  NOTE: simple-sds serialization has only been implemented for the default template parameters.
          */
         void simple_sds_load(std::istream& in) {
-            SDSL_THROW(std::logic_error, "simple-sds serialization has not been implemented for these template parameters");
+            SDSL_THROW(std::logic_error("simple-sds serialization has not been implemented for these template parameters"));
         }
 
         //! Returns the size of the vector in elements.
         /*! \return Number of elements required for serializing the vector.
          */
         size_t simple_sds_size() const {
-            SDSL_THROW(std::logic_error, "simple-sds serialization has not been implemented for these template parameters");
+            SDSL_THROW(std::logic_error("simple-sds serialization has not been implemented for these template parameters"));
         }
 
         //! Returns the size of a vector in elements.
@@ -674,7 +674,7 @@ class sd_vector
          *  \return Number of elements required for serializing the vector.
          */
         static size_t simple_sds_size(size_t n, size_t m) {
-            SDSL_THROW(std::logic_error, "simple-sds serialization has not been implemented for these template parameters");
+            SDSL_THROW(std::logic_error("simple-sds serialization has not been implemented for these template parameters"));
         }
 
 //-----------------------------------------------------------------------------

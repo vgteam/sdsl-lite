@@ -117,7 +117,7 @@ class wt_ap
         wt_ap(int_vector_buffer<int_width>& buf, size_type size) : m_size(size)
         {
             if (buf.size() < m_size) {
-                SDSL_THROW(std::logic_error, "n="+util::to_string(buf.size())+" < "+util::to_string(m_size)+"=m_size");
+                SDSL_THROW(std::logic_error("n="+util::to_string(buf.size())+" < "+util::to_string(m_size)+"=m_size"));
                 return;
             }
 

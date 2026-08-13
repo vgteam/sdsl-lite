@@ -38,7 +38,7 @@ void calculate_character_occurences(t_file_buffer& text, const int_vector_size_t
 {
     C = t_rac();
     if (text.size() < size) {
-        SDSL_THROW(std::logic_error, "calculate_character_occurrences: stream size is smaller than size!");
+        SDSL_THROW(std::logic_error("calculate_character_occurrences: stream size is smaller than size!"));
         return;
     }
     for (int_vector_size_type i=0; i < size; ++i) {
@@ -221,7 +221,7 @@ struct _byte_tree {
                     v = m_nodes[v].parent; // go up the tree
                 }
                 if (pl > 56) {
-                    SDSL_THROW(std::logic_error, "Code depth greater than 56!!!");
+                    SDSL_THROW(std::logic_error("Code depth greater than 56!!!"));
                 }
                 m_path[c] = pw | (pl << 56);
                 prev_c = c;
@@ -467,7 +467,7 @@ struct _int_tree {
                     v = m_nodes[v].parent; // go up the tree
                 }
                 if (l > 56) {
-                    SDSL_THROW(std::logic_error, "Code depth greater than 56!!!");
+                    SDSL_THROW(std::logic_error("Code depth greater than 56!!!"));
                 }
                 m_path[c] = w | (l << 56);
                 prev_c = c;

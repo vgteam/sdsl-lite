@@ -284,7 +284,7 @@ class k2_tree
         k2_tree(const std::vector<std::vector<int>> &matrix)
         {
             if (matrix.size() < 1) {
-                SDSL_THROW(std::logic_error, "Matrix has no elements");
+                SDSL_THROW(std::logic_error("Matrix has no elements"));
             }
             std::vector<bit_vector> t;
             k_k = k;

@@ -100,16 +100,6 @@ public:
         std::runtime_error(msg(filename, for_writing)) {
     }
 
-    //! Constructor from an already-formatted message (typically the result
-    //! of msg()). This overload exists so that SDSL_THROW(CannotOpenFile,
-    //! message) (see error_handling.hpp), which always constructs
-    //! `exception_type(message)` from a single string, can be used at the
-    //! call sites below without CannotOpenFile losing its distinct type or
-    //! its formatted message.
-    explicit CannotOpenFile(const std::string& message) :
-        std::runtime_error(message) {
-    }
-
     static std::string msg(const std::string& filename, bool for_writing) {
         std::string msg = "Cannot open ";
         msg += filename;
@@ -357,7 +347,7 @@ bool load_option(Serialize& value, std::istream& in)
         value.simple_sds_load(in);
         // Only do the sanity check if we got a valid starting offset.
         if (offset != -1 && static_cast<size_t>(in.tellg()) != expected) {
-            SDSL_THROW(InvalidData, "Incorrect size for an optional structure");
+            SDSL_THROW(InvalidData("Incorrect size for an optional structure"));
         }
         return true;
     }
@@ -393,7 +383,7 @@ void serialize_to(const Serialize& data, const std::string& filename)
     // The default error message can be uninformative.
     std::ofstream out(filename, std::ios_base::binary);
     if (!out) {
-        SDSL_THROW(CannotOpenFile, CannotOpenFile::msg(filename, true));
+        SDSL_THROW(CannotOpenFile(filename, true));
     }
 
     out.exceptions(std::ofstream::failbit | std::ofstream::badbit);
@@ -416,7 +406,7 @@ void load_from(Serialize& data, const std::string& filename)
     // The default error message can be uninformative.
     std::ifstream in(filename, std::ios_base::binary);
     if (!in) {
-        SDSL_THROW(CannotOpenFile, CannotOpenFile::msg(filename, false));
+        SDSL_THROW(CannotOpenFile(filename, false));
     }
 
     in.exceptions(std::ifstream::eofbit | std::ifstream::badbit | std::ifstream::failbit);
