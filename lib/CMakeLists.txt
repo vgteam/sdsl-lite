@@ -27,16 +27,8 @@ set_target_properties(sdsl PROPERTIES
         #	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../examples"
 )
 
-# sdsl-lite is almost entirely header-only (int_vector.hpp and friends are
-# templates), so any translation unit that includes these headers -- whether
-# it's one of this library's own .cpp files or downstream consumer code --
-# must see the same SDSL_NO_EXCEPTIONS/SDSL_USE_ABSEIL_LOGGING/
-# SDSL_ENABLE_SHARED_MEMORY definitions, or different translation units end
-# up compiling different bodies for the same template instantiations. Using
-# PUBLIC here (rather than PRIVATE) makes these definitions a usage
-# requirement that CMake propagates to anything that does
-# target_link_libraries(... sdsl), so consumers don't have to redefine them
-# by hand to stay consistent with how libsdsl itself was built.
+# PUBLIC: sdsl-lite's headers are templates, so consumer code needs these
+# same defines or it'll compile different template bodies than libsdsl.
 if(NOT SDSL_USE_EXCEPTIONS)
     target_compile_definitions(sdsl PUBLIC SDSL_NO_EXCEPTIONS)
     if(SDSL_USE_ABSEIL_LOGGING)

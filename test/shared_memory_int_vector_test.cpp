@@ -9,16 +9,13 @@ namespace
 
 #ifdef SDSL_ENABLE_SHARED_MEMORY
 
-// Stands in for a block of memory int_vector did not allocate (e.g. shared
-// memory): the (size, width, data, loaded_from_shared_memory) constructor
-// must not free or reallocate it.
+// Stands in for a block of memory int_vector did not allocate itself, e.g. shared memory.
 std::vector<uint64_t> make_external_buffer(size_t words)
 {
     return std::vector<uint64_t>(words, 0);
 }
 
-// 20 elements * 64 bits each == 20 uint64_t words, so this buffer is exactly
-// large enough and no bit goes unaccounted for.
+// 20 elements * 64 bits each == 20 uint64_t words, matching the buffer size exactly.
 TEST(SharedMemoryIntVectorTest, DoesNotFreeExternalBuffer)
 {
     std::vector<uint64_t> external_buffer = make_external_buffer(20);

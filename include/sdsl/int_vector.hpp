@@ -329,12 +329,8 @@ class int_vector
         uint64_t*      m_data;  //!< Pointer to the memory for the bits.
         int_width_type m_width; //!< Width of the integers.
 #ifdef SDSL_ENABLE_SHARED_MEMORY
-        // True if m_data points into memory this int_vector did not allocate
-        // through memory_manager and therefore must not free or reallocate;
-        // see the (size, int_width, data, loaded_from_shared_memory)
-        // constructor below. Only present when SDSL_ENABLE_SHARED_MEMORY is
-        // defined, so that int_vector's layout and behavior are completely
-        // unchanged when the feature is off.
+        // True if m_data is externally-owned and must not be freed or
+        // reallocated; see the loaded_from_shared_memory constructor below.
         bool shared_memory_flag;
 #endif
 
@@ -353,23 +349,13 @@ class int_vector
 #ifdef SDSL_ENABLE_SHARED_MEMORY
         //! Wraps existing raw data (e.g. a shared memory segment) as an
         //! int_vector, without allocating or copying.
-        /*! \param size          Number of elements, matching the
-                                  (size, default_value, int_width)
-                                  constructor above (this constructor stores
-                                  `size * int_width` into the bit count
-                                  bit_size() reports, not `size` itself).
+        /*! \param size          Number of elements.
             \param int_width     The width of each integer.
-            \param data          Pointer to `size * int_width` bits' worth
-                                  of existing uint64_t words. This
-                                  int_vector does not take ownership: the
-                                  caller must keep the memory alive for as
-                                  long as this int_vector (or anything
-                                  moved/swapped from it) exists, and is
-                                  responsible for freeing it afterward.
+            \param data          Pointer to `size * int_width` bits' worth of
+                                  existing uint64_t words; the caller keeps
+                                  ownership and must outlive this int_vector.
             \param loaded_from_shared_memory  Must be `true`; marks this
-                                  instance as non-owning, so the destructor
-                                  and bit_resize() leave `data` alone instead
-                                  of treating it as memory_manager-allocated.
+                                  instance as non-owning.
          */
         int_vector(size_type size,
                 uint8_t int_width,
@@ -1347,10 +1333,7 @@ inline int_vector<t_width>::int_vector(size_type size, value_type default_value,
 #ifdef SDSL_ENABLE_SHARED_MEMORY
 template<uint8_t t_width>
 inline int_vector<t_width>::int_vector(size_type size, uint8_t int_width, uint64_t* data, bool loaded_from_shared_memory):
-    // m_size is a bit count everywhere else in this class (see bit_size(),
-    // capacity()), not the element count `size` names here, so it has to be
-    // size * int_width -- not the raw `size` -- for size()/capacity() to
-    // agree with a normal int_vector holding the same elements.
+    // m_size is a bit count elsewhere in this class, not an element count.
     m_size(size * int_width), m_data(data), m_width(int_width), shared_memory_flag(loaded_from_shared_memory)
 {
 }
@@ -1371,11 +1354,7 @@ template<uint8_t t_width>
 inline int_vector<t_width>::int_vector(const int_vector& v):
     m_size(0), m_data(nullptr), m_width(v.m_width)
 #ifdef SDSL_ENABLE_SHARED_MEMORY
-    // A copy is always a fresh, independently-owned int_vector, never a
-    // second non-owning view of whatever v happens to wrap: propagating
-    // v's flag here would make bit_resize() below skip allocating m_data
-    // (see bit_resize()), leaving it null while the memcpy below still
-    // writes through it.
+    // A copy is always a fresh, independently-owned int_vector.
     , shared_memory_flag(false)
 #endif
 {
@@ -1393,15 +1372,8 @@ int_vector<t_width>& int_vector<t_width>::operator=(const int_vector& v)
 {
     if (this != &v) {// if v is not the same object
 #ifdef SDSL_ENABLE_SHARED_MEMORY
-        // As in the copy constructor above: assigning always makes this
-        // int_vector an independent, owned copy. If it was previously a
-        // non-owning view (shared_memory_flag true), m_data was never
-        // memory_manager's to begin with, so it must not be passed to
-        // bit_resize()/memory_manager::resize() at all -- drop it here
-        // (without freeing it, since we never owned it) so bit_resize()
-        // allocates fresh, correctly-sized storage instead of either
-        // silently no-op'ing (leaving a stale/undersized buffer for the
-        // memcpy below to overrun) or reallocating memory it doesn't own.
+        // Assigning always makes this int_vector an independent, owned
+        // copy, so drop any prior non-owning view without freeing it.
         if (loaded_from_shared_memory()) {
             m_data = nullptr;
             m_size = 0;

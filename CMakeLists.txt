@@ -27,13 +27,9 @@ option(CODE_COVERAGE "Set ON to add code coverage compile options" OFF)
 option(GENERATE_DOC "Set ON to generate doxygen API reference in build/doc directory" OFF)
 option(WITH_GOOGLETEST "Set ON to install google test along with the library" ON)
 
-# By default, sdsl-lite reports fatal errors by throwing C++ exceptions, as
-# it always has. Some embedders (e.g. Google's DeepVariant, which builds
-# with Bazel and -fno-exceptions) need a build that never throws instead.
+# Some embedders (e.g. Google's DeepVariant) build with -fno-exceptions.
 option(SDSL_USE_EXCEPTIONS "Report fatal errors by throwing C++ exceptions" ON)
-# When exceptions are off, fatal errors are reported through Abseil's
-# ABSL_LOG(FATAL) if this is on, or through stderr + std::abort() if it is
-# off. It has no effect when SDSL_USE_EXCEPTIONS is on.
+# Only takes effect when SDSL_USE_EXCEPTIONS is off.
 option(SDSL_USE_ABSEIL_LOGGING "Use Abseil logging to report fatal errors when exceptions are off" OFF)
 
 if(NOT SDSL_USE_EXCEPTIONS)
@@ -46,10 +42,8 @@ if(NOT SDSL_USE_EXCEPTIONS)
     endif()
 endif()
 
-# int_vector normally always allocates and owns its own memory. Turning this
-# on adds an additional int_vector constructor that instead wraps a
-# caller-supplied uint64_t buffer without copying or taking ownership of it.
-# Off by default because it changes int_vector's memory layout.
+# Adds an int_vector constructor that wraps a caller-supplied buffer instead
+# of allocating its own.
 option(SDSL_ENABLE_SHARED_MEMORY "Enable int_vector's constructor for wrapping externally-owned memory" OFF)
 
 # C++17 compiler Check
@@ -167,11 +161,7 @@ ADD_CUSTOM_TARGET(uninstall-sdsl
 target_include_directories(sdsl PUBLIC include)
 
 # pkg-config consumers don't see the sdsl CMake target's PUBLIC compile
-# definitions (see lib/CMakeLists.txt), so -- same reasoning as there, since
-# sdsl-lite's headers are what actually read these defines -- Cflags needs
-# to carry them explicitly, or a pkg-config consumer built without
-# redeclaring these flags by hand would silently disagree with how libsdsl
-# itself was compiled.
+# definitions (see lib/CMakeLists.txt), so Cflags needs to carry them too.
 set(SDSL_PC_CFLAGS_EXTRA "")
 if(NOT SDSL_USE_EXCEPTIONS)
     string(APPEND SDSL_PC_CFLAGS_EXTRA " -DSDSL_NO_EXCEPTIONS")

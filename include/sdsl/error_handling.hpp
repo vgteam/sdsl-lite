@@ -22,23 +22,16 @@
 #ifndef INCLUDED_SDSL_ERROR_HANDLING
 #define INCLUDED_SDSL_ERROR_HANDLING
 
-// SDSL_THROW always constructs its argument (to call .what() even when not
-// thrown), so the exception types sdsl-lite's call sites construct need to
-// be complete here regardless of SDSL_NO_EXCEPTIONS.
+// SDSL_THROW always constructs its argument, even when not thrown.
 #include <stdexcept>
 #include <new>
 #include <system_error>
 #include <cerrno>
 
 /*
- * By default, SDSL_THROW(exception) throws the already-constructed
- * exception object, matching sdsl-lite's traditional behavior. Some
- * environments (notably Bazel builds embedding sdsl-lite in exceptions-free
- * code, such as Google's DeepVariant) need to build with -fno-exceptions.
- * Defining SDSL_NO_EXCEPTIONS at build time switches SDSL_THROW to a
- * non-throwing fatal-error path instead: it logs exception.what() with
- * Abseil's ABSL_LOG(FATAL) if SDSL_USE_ABSEIL_LOGGING is also defined, or
- * otherwise prints it to stderr and calls std::abort().
+ * SDSL_THROW(exception) throws the given exception object, unless
+ * SDSL_NO_EXCEPTIONS is defined, in which case it logs exception.what() and
+ * calls std::abort() instead (via Abseil if SDSL_USE_ABSEIL_LOGGING is set).
  */
 
 #if defined(SDSL_NO_EXCEPTIONS)

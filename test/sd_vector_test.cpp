@@ -276,9 +276,8 @@ TYPED_TEST(sd_vector_test, empty_one_iterator)
 }
 
 #ifndef SDSL_NO_EXCEPTIONS
-// With SDSL_NO_EXCEPTIONS, these failure paths report through SDSL_THROW's
-// non-throwing branch (see error_handling.hpp), which cannot be caught by
-// ASSERT_THROW, so there is nothing left here to check in that build.
+// With SDSL_NO_EXCEPTIONS these failure paths abort instead of throwing, so
+// ASSERT_THROW can't catch them.
 TYPED_TEST(sd_vector_test, builder_exceptions)
 {
     {
