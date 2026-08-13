@@ -329,13 +329,12 @@ class int_vector
         uint64_t*      m_data;  //!< Pointer to the memory for the bits.
         int_width_type m_width; //!< Width of the integers.
 #ifdef SDSL_ENABLE_SHARED_MEMORY
-        // True if m_data points into memory (e.g. a Boost.Interprocess shared
-        // memory segment) that this int_vector did not allocate through
-        // memory_manager and therefore must not free or reallocate; see the
-        // (size, int_width, data, loaded_from_shared_memory) constructor
-        // below. Only present when SDSL_ENABLE_SHARED_MEMORY is defined, so
-        // that int_vector's layout and behavior are completely unchanged
-        // when the feature is off.
+        // True if m_data points into memory this int_vector did not allocate
+        // through memory_manager and therefore must not free or reallocate;
+        // see the (size, int_width, data, loaded_from_shared_memory)
+        // constructor below. Only present when SDSL_ENABLE_SHARED_MEMORY is
+        // defined, so that int_vector's layout and behavior are completely
+        // unchanged when the feature is off.
         bool shared_memory_flag;
 #endif
 
@@ -352,8 +351,8 @@ class int_vector
                    uint8_t int_width = t_width);
 
 #ifdef SDSL_ENABLE_SHARED_MEMORY
-        //! Wraps existing raw data (e.g. from a Boost.Interprocess shared
-        //! memory segment) as an int_vector, without allocating or copying.
+        //! Wraps existing raw data (e.g. a shared memory segment) as an
+        //! int_vector, without allocating or copying.
         /*! \param size          Number of elements, matching the
                                   (size, default_value, int_width)
                                   constructor above (this constructor stores

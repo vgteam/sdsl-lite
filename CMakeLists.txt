@@ -47,20 +47,10 @@ if(NOT SDSL_USE_EXCEPTIONS)
 endif()
 
 # int_vector normally always allocates and owns its own memory. Turning this
-# on adds an additional int_vector constructor (see include/sdsl/int_vector.hpp)
-# that instead wraps a caller-supplied uint64_t buffer -- e.g. one obtained
-# from a Boost.Interprocess shared memory segment -- without copying or
-# taking ownership of it, plus the sdsl::shared_memory_int_vector helpers
-# (see include/sdsl/shared_memory_int_vector.hpp) that place an int_vector's
-# bits into such a segment under a name a separate process can attach to.
-# Off by default because it changes int_vector's memory layout (an extra
-# bool member) and requires Boost; on, everything about int_vector's default
-# (owning) behavior is unchanged.
-option(SDSL_ENABLE_SHARED_MEMORY "Enable int_vector's shared-memory-wrapping constructor and the shared_memory_int_vector helpers, backed by Boost.Interprocess" OFF)
-if(SDSL_ENABLE_SHARED_MEMORY)
-    find_package(Boost REQUIRED)
-    message("sdsl-lite: Boost found, shared-memory int_vector support enabled")
-endif()
+# on adds an additional int_vector constructor that instead wraps a
+# caller-supplied uint64_t buffer without copying or taking ownership of it.
+# Off by default because it changes int_vector's memory layout.
+option(SDSL_ENABLE_SHARED_MEMORY "Enable int_vector's constructor for wrapping externally-owned memory" OFF)
 
 # C++17 compiler Check
 if(CMAKE_CXX_COMPILER MATCHES ".*clang.*" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")

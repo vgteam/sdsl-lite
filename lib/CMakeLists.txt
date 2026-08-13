@@ -47,10 +47,4 @@ endif()
 
 if(SDSL_ENABLE_SHARED_MEMORY)
     target_compile_definitions(sdsl PUBLIC SDSL_ENABLE_SHARED_MEMORY)
-    target_link_libraries(sdsl PUBLIC Boost::boost)
-    # Boost.Interprocess is header-only, but its named shared memory objects
-    # need librt on Linux (not on macOS, where the equivalent is in libc).
-    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        target_link_libraries(sdsl PUBLIC rt)
-    endif()
 endif()
