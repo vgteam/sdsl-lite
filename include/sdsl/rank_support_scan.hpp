@@ -86,7 +86,7 @@ class rank_support_scan : public rank_support
         }
 
         //! swap Operator
-        void swap(rank_support_scan&) {}
+        void swap(rank_support_scan&) noexcept {}
 };
 
 template<uint8_t t_b, uint8_t t_pat_len>

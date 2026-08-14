@@ -51,7 +51,7 @@ class select_support_scan : public select_support
         enum { bit_pat = t_b };
     public:
         explicit select_support_scan(const bit_vector* v=nullptr) : select_support(v) {}
-        select_support_scan(const select_support_scan<t_b,t_pat_len>& ss) : select_support(ss.m_v) {}
+        select_support_scan(const select_support_scan<t_b,t_pat_len>& ss) noexcept : select_support(ss.m_v) {}
 
         inline size_type select(size_type i) const;
         inline size_type operator()(size_type i)const
@@ -71,16 +71,16 @@ class select_support_scan : public select_support
         {
             m_v = v;
         }
-        select_support_scan<t_b, t_pat_len>& operator=(const select_support_scan& ss)
+        select_support_scan<t_b, t_pat_len>& operator=(const select_support_scan& ss) noexcept
         {
             set_vector(ss.m_v);
             return *this;
         }
-        void swap(select_support_scan<t_b, t_pat_len>&) {}
+        void swap(select_support_scan<t_b, t_pat_len>&) noexcept {}
 };
 
 template<uint8_t t_b, uint8_t t_pat_len>
-inline typename select_support_scan<t_b,t_pat_len>::size_type select_support_scan<t_b,t_pat_len>::select(size_type i)const
+inline typename select_support_scan<t_b,t_pat_len>::size_type select_support_scan<t_b,t_pat_len>::select(size_type i) const
 {
     const uint64_t* data = m_v->data();
     size_type word_pos = 0;
@@ -105,5 +105,5 @@ inline typename select_support_scan<t_b,t_pat_len>::size_type select_support_sca
     return (word_pos<<6) + select_support_trait<t_b,t_pat_len>::ith_arg_pos_in_the_word(*data, i-sum_args, old_carry);
 }
 
-} // end namespace
+} // end namespace sdsl
 #endif
