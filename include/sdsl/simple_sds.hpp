@@ -87,6 +87,41 @@ public:
     explicit InvalidData(const char* message) : std::runtime_error(message) {}
 };
 
+//! An exception that indicates that the given version is unsupported.
+class UnsupportedVersion : public std::runtime_error
+{
+public:
+    //! Constructor for integer version numbers.
+    /*! \param type_name Name of the type.
+     *  \param version Version number.
+     *  \param min_version Minimum supported version number.
+     *  \param max_version Maximum supported version number.
+     */
+    UnsupportedVersion(const std::string& type_name, std::size_t version, std::size_t min_version, std::size_t max_version) :
+        std::runtime_error(msg(type_name, version, min_version, max_version)) {
+    }
+
+    //! Constructor for string version numbers.
+    /*! \param type_name Name of the type.
+     *  \param version Version number.
+     *  \param min_version Minimum supported version number.
+     *  \param max_version Maximum supported version number.
+     */
+    UnsupportedVersion(const std::string& type_name, const std::string& version, const std::string& min_version, const std::string& max_version) :
+        std::runtime_error(msg(type_name, version, min_version, max_version)) {
+    }
+
+    static std::string msg(const std::string& type_name, std::size_t version, std::size_t min_version, std::size_t max_version) {
+        std::string msg = type_name + ": Unsupported version " + std::to_string(version) + " (expected " + std::to_string(min_version) + " to " + std::to_string(max_version) + ")";
+        return msg;
+    }
+
+    static std::string msg(const std::string& type_name, const std::string& version, const std::string& min_version, const std::string& max_version) {
+        std::string msg = type_name + ": Unsupported version " + version + " (expected " + min_version + " to " + max_version + ")";
+        return msg;
+    }
+};
+
 //! An exception that indicates that the file could not be opened.
 class CannotOpenFile : public std::runtime_error
 {
@@ -387,6 +422,32 @@ void serialize_to(const Serialize& data, const std::string& filename)
 
     out.exceptions(std::ofstream::failbit | std::ofstream::badbit);
     data.simple_sds_serialize(out);
+    out.close();
+}
+
+//! Serializes a structure into the given file using the given version of the serialization format.
+/*! \tparam Serialize A type implementing `void simple_sds_serialize_version(std::ostream&, uint32_t)`.
+ *  \param data The structure to be serialized.
+ *  \param filename File name for serialization.
+ *  \param version Version of the serialization format.
+ *
+ *  \par If the file exists, it will be overwritten.
+ *  Throws `CannotOpenFile` if the file cannot be opened.
+ *  Output stream errors are thrown as exceptions.
+ *  The serialization method is expected to throw `UnsupportedVersion` if the version is unsupported.
+ *  Any exceptions from serialization methods will be passed through.
+ */
+template<typename Serialize>
+void serialize_to(const Serialize& data, const std::string& filename, uint32_t version)
+{
+    // The default error message can be uninformative.
+    std::ofstream out(filename, std::ios_base::binary);
+    if (!out) {
+        throw CannotOpenFile(filename, true);
+    }
+
+    out.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+    data.simple_sds_serialize_version(out, version);
     out.close();
 }
 
