@@ -1,4 +1,3 @@
-#include "sdsl/error_handling.hpp"
 #include "sdsl/simple_sds.hpp"
 #include "sdsl/int_vector.hpp"
 #include "sdsl/sd_vector.hpp"
@@ -33,7 +32,7 @@ struct ByteArray
         size_t real_sum = 0;
         for (auto value : this->bytes) { real_sum += value; }
         if (real_sum != this->sum) {
-            SDSL_THROW(simple_sds::InvalidData("Incorrect sum"));
+            throw (simple_sds::InvalidData("Incorrect sum"));
         }
     }
 

@@ -22,7 +22,6 @@
 #ifndef INCLUDED_SDSL_SIMPLE_SDS
 #define INCLUDED_SDSL_SIMPLE_SDS
 
-#include "error_handling.hpp"
 #include <cstdint>
 #include <fstream>
 #include <iostream>
@@ -347,7 +346,7 @@ bool load_option(Serialize& value, std::istream& in)
         value.simple_sds_load(in);
         // Only do the sanity check if we got a valid starting offset.
         if (offset != -1 && static_cast<size_t>(in.tellg()) != expected) {
-            SDSL_THROW(InvalidData("Incorrect size for an optional structure"));
+            throw (InvalidData("Incorrect size for an optional structure"));
         }
         return true;
     }
@@ -383,7 +382,7 @@ void serialize_to(const Serialize& data, const std::string& filename)
     // The default error message can be uninformative.
     std::ofstream out(filename, std::ios_base::binary);
     if (!out) {
-        SDSL_THROW(CannotOpenFile(filename, true));
+        throw (CannotOpenFile(filename, true));
     }
 
     out.exceptions(std::ofstream::failbit | std::ofstream::badbit);
@@ -406,7 +405,7 @@ void load_from(Serialize& data, const std::string& filename)
     // The default error message can be uninformative.
     std::ifstream in(filename, std::ios_base::binary);
     if (!in) {
-        SDSL_THROW(CannotOpenFile(filename, false));
+        throw (CannotOpenFile(filename, false));
     }
 
     in.exceptions(std::ifstream::eofbit | std::ifstream::badbit | std::ifstream::failbit);

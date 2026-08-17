@@ -23,7 +23,6 @@
 #ifndef INCLUDED_SDSL_INT_WAVELET_TREE
 #define INCLUDED_SDSL_INT_WAVELET_TREE
 
-#include "error_handling.hpp"
 #include "sdsl_concepts.hpp"
 #include "int_vector.hpp"
 #include "rank_support_v.hpp"
@@ -174,7 +173,7 @@ class wt_int
                 return;
             size_type n = buf.size();  // set n
             if (n < m_size) {
-                SDSL_THROW(std::logic_error("n="+util::to_string(n)+" < "+util::to_string(m_size)+"=m_size"));
+                throw (std::logic_error("n="+util::to_string(n)+" < "+util::to_string(m_size)+"=m_size"));
                 return;
             }
             m_sigma = 0;
@@ -448,7 +447,7 @@ class wt_int
                 mask >>= 1;
             }
             if (0ULL == node_size or node_size < i) {
-                SDSL_THROW(std::logic_error("select("+util::to_string(i)+","+util::to_string(c)+"): c does not occur i times in the WT"));
+                throw (std::logic_error("select("+util::to_string(i)+","+util::to_string(c)+"): c does not occur i times in the WT"));
                 return m_size;
             }
             mask = 1ULL;

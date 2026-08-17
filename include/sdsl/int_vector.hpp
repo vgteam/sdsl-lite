@@ -21,7 +21,7 @@
 #ifndef INCLUDED_SDSL_INT_VECTOR
 #define INCLUDED_SDSL_INT_VECTOR
 
-#include "error_handling.hpp"
+#include <new>
 #include "bits.hpp"
 #include "structure_tree.hpp"
 #include "util.hpp"
@@ -1361,7 +1361,7 @@ inline int_vector<t_width>::int_vector(const int_vector& v):
     bit_resize(v.bit_size());
     if (v.capacity() > 0) {
         if (memcpy(m_data, v.data() ,v.capacity()/8)==nullptr) {
-            SDSL_THROW(std::bad_alloc()); // LCOV_EXCL_LINE
+            throw (std::bad_alloc()); // LCOV_EXCL_LINE
         }
     }
     width(v.m_width);
@@ -1383,7 +1383,7 @@ int_vector<t_width>& int_vector<t_width>::operator=(const int_vector& v)
         bit_resize(v.bit_size());
         if (v.bit_size()>0) {
             if (memcpy(m_data, v.data() ,v.capacity()/8)==nullptr) {
-                SDSL_THROW(std::bad_alloc()); // LCOV_EXCL_LINE
+                throw (std::bad_alloc()); // LCOV_EXCL_LINE
             }
         }
         width(v.width());
@@ -1447,10 +1447,10 @@ auto int_vector<t_width>::get_int(size_type idx, const uint8_t len)const -> valu
 {
 #ifdef SDSL_DEBUG
     if (idx+len > m_size) {
-        SDSL_THROW(std::out_of_range("OUT_OF_RANGE_ERROR: int_vector::get_int(size_type, uint8_t); idx+len > size()!"));
+        throw (std::out_of_range("OUT_OF_RANGE_ERROR: int_vector::get_int(size_type, uint8_t); idx+len > size()!"));
     }
     if (len > 64) {
-        SDSL_THROW(std::out_of_range("OUT_OF_RANGE_ERROR: int_vector::get_int(size_type, uint8_t); len>64!"));
+        throw (std::out_of_range("OUT_OF_RANGE_ERROR: int_vector::get_int(size_type, uint8_t); len>64!"));
     }
 #endif
     return bits::read_int(m_data+(idx>>6), idx&0x3F, len);
@@ -1461,10 +1461,10 @@ inline void int_vector<t_width>::set_int(size_type idx, value_type x, const uint
 {
 #ifdef SDSL_DEBUG
     if (idx+len > m_size) {
-        SDSL_THROW(std::out_of_range("OUT_OF_RANGE_ERROR: int_vector::set_int(size_type, uint8_t); idx+len > size()!"));
+        throw (std::out_of_range("OUT_OF_RANGE_ERROR: int_vector::set_int(size_type, uint8_t); idx+len > size()!"));
     }
     if (len > 64) {
-        SDSL_THROW(std::out_of_range("OUT_OF_RANGE_ERROR: int_vector::set_int(size_type, uint8_t); len>64!"));
+        throw (std::out_of_range("OUT_OF_RANGE_ERROR: int_vector::set_int(size_type, uint8_t); len>64!"));
     }
 #endif
     bits::write_int(m_data+(idx>>6), x, idx&0x3F, len);
@@ -1749,13 +1749,13 @@ void int_vector<t_width>::simple_sds_load(std::istream& in)
         size_t bits = simple_sds::load_value<size_t>(in);
         size_t elements = simple_sds::load_value<size_t>(in);
         if (width < 1 || width > 64) {
-            SDSL_THROW(simple_sds::InvalidData("Width must be between 1 and 64 bits"));
+            throw (simple_sds::InvalidData("Width must be between 1 and 64 bits"));
         }
         if (length * width != bits) {
-            SDSL_THROW(simple_sds::InvalidData("Bit length does not match length * width"));
+            throw (simple_sds::InvalidData("Bit length does not match length * width"));
         }
         if (elements != simple_sds::bits_to_elements(bits)) {
-            SDSL_THROW(simple_sds::InvalidData("Bit length / word length mismatch"));
+            throw (simple_sds::InvalidData("Bit length / word length mismatch"));
         }
         int_vector_trait<t_width>::set_width(width, this->m_width);
         this->resize(length);
@@ -1766,10 +1766,10 @@ void int_vector<t_width>::simple_sds_load(std::istream& in)
         size_t bits = simple_sds::load_value<size_t>(in);
         size_t elements = simple_sds::load_value<size_t>(in);
         if (ones > bits) {
-            SDSL_THROW(simple_sds::InvalidData("Too many set bits"));
+            throw (simple_sds::InvalidData("Too many set bits"));
         }
         if (elements != simple_sds::bits_to_elements(bits)) {
-            SDSL_THROW(simple_sds::InvalidData("Bit length / word length mismatch"));
+            throw (simple_sds::InvalidData("Bit length / word length mismatch"));
         }
         this->resize(bits);
         simple_sds::load_data(reinterpret_cast<char*>(this->m_data), this->capacity() / 8, in);

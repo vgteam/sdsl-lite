@@ -1,4 +1,4 @@
-#include "sdsl/error_handling.hpp"
+#include <stdexcept>
 #include "sdsl/ram_fs.hpp"
 #include "sdsl/util.hpp"
 #include <cstdio>
@@ -15,7 +15,7 @@ sdsl::ram_fs_initializer::ram_fs_initializer()
 {
     if (0 == nifty_counter++) {
         if (!ram_fs::m_map.empty()) {
-            SDSL_THROW(std::logic_error("Static preinitialized object is not empty."));
+            throw (std::logic_error("Static preinitialized object is not empty."));
         }
     }
 }

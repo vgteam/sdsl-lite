@@ -1,4 +1,4 @@
-#include "sdsl/error_handling.hpp"
+#include <stdexcept>
 #include "sdsl/sd_vector.hpp"
 #include "sdsl/simple_sds.hpp"
 
@@ -25,7 +25,7 @@ sd_vector_builder::sd_vector_builder(size_type n, size_type m, bool multiset) :
     m_last_high(0), m_highpos(0)
 {
     if (!multiset && m_capacity > m_size) {
-        SDSL_THROW(std::runtime_error("sd_vector_builder: requested capacity is larger than vector size"));
+        throw (std::runtime_error("sd_vector_builder: requested capacity is larger than vector size"));
     }
 
     std::pair<size_type, size_type> params = sd_vector<>::get_params(m_size, m_capacity);
@@ -55,7 +55,7 @@ template<>
 sd_vector<>::sd_vector(builder_type& builder)
 {
     if(builder.items() != builder.capacity()) {
-      SDSL_THROW(std::runtime_error("sd_vector: the builder is not at full capacity."));
+      throw (std::runtime_error("sd_vector: the builder is not at full capacity."));
     }
 
     m_size = builder.m_size;
@@ -100,7 +100,7 @@ sd_vector<>::simple_sds_load(std::istream& in)
 
     // It may be that `low.size() > length` because we have a very dense multiset.
     if (high.size() != low.size() + get_buckets(length, low.width())) {
-        SDSL_THROW(simple_sds::InvalidData("Invalid number of buckets"));
+        throw (simple_sds::InvalidData("Invalid number of buckets"));
     }
 
     this->m_size = length;
