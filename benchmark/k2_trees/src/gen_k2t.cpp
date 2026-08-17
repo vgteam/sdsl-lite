@@ -30,7 +30,7 @@ void generate_bit_vector_buffers(const std::string& idx_file,
 		sdsl::k2_tree_ns::idx_type x, y;
 		std::istringstream iss(line);
 		if(!(iss >> x >> y))
-			throw (std::invalid_argument("Not expected line at construct"));
+			throw std::invalid_argument("Not expected line at construct");
 		xv[cnt] = x;
 		yv[cnt++] = y;
 	}

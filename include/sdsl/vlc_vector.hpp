@@ -21,10 +21,11 @@
 #ifndef SDSL_VLC_VECTOR
 #define SDSL_VLC_VECTOR
 
-#include <stdexcept>
 #include "int_vector.hpp"
 #include "coder_elias_delta.hpp"
 #include "iterators.hpp"
+
+#include <stdexcept>
 
 //! Namespace for the succinct data structure library.
 namespace sdsl
@@ -198,7 +199,7 @@ vlc_vector<t_coder, t_dens, t_width>::vlc_vector(const Container& c)
 //  (1) Calculate size of z
     for (size_type i=0; i < c.size(); ++i) {
         if (c[i]+1<1) {
-            throw (std::logic_error("vlc_vector cannot decode values smaller than 1!"));
+            throw std::logic_error("vlc_vector cannot decode values smaller than 1!");
         }
         z_size += t_coder::encoding_length(c[i]+1);
     }
@@ -235,7 +236,7 @@ vlc_vector<t_coder, t_dens, t_width>::vlc_vector(int_vector_buffer<int_width>& v
     for (size_type i=0; i < n; ++i) {
         size_type x = v_buf[i]+1;
         if (x < 1) {
-            throw (std::logic_error("vlc_vector cannot decode values smaller than 1!"));
+            throw std::logic_error("vlc_vector cannot decode values smaller than 1!");
         }
         z_size += t_coder::encoding_length(x);
     }

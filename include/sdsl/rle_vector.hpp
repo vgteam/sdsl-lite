@@ -191,10 +191,10 @@ class rle_vector_builder
         {
             if (n == 0) { return; }
             if (i < this->tail()) {
-                throw (std::runtime_error("rle_vector_builder::set(): the position is too small."));
+                throw std::runtime_error("rle_vector_builder::set(): the position is too small.");
             }
             if (i + n > this->size()) {
-                throw (std::runtime_error("sd_vector_builder::set(): the position is too large."));
+                throw std::runtime_error("sd_vector_builder::set(): the position is too large.");
             }
             this->set_unsafe(i, n);
         }

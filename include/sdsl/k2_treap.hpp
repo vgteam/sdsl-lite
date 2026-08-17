@@ -21,14 +21,14 @@
 #ifndef INCLUDED_SDSL_K2_TREAP
 #define INCLUDED_SDSL_K2_TREAP
 
-#include <stdexcept>
 #include "vectors.hpp"
 #include "bits.hpp"
 #include "k2_treap_helper.hpp"
 #include "k2_treap_algorithm.hpp"
-#include <tuple>
 #include <algorithm>
 #include <climits>
+#include <stdexcept>
+#include <tuple>
 #include <vector>
 
 //! Namespace for the succinct data structure library.
@@ -195,7 +195,7 @@ class k2_treap
             uint8_t res = 0;
             while (res <= 64 and precomp<t_k>::exp(res) <= x) { ++res; }
             if (res == 65) {
-                throw (std::logic_error("Maximal element of input is too big."));
+                throw std::logic_error("Maximal element of input is too big.");
             }
 
             if (precomp<t_k>::exp(res) <= std::numeric_limits<uint32_t>::max()) {

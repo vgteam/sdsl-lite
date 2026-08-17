@@ -38,8 +38,9 @@
 
 #define DBG_OUT if(0)std::cout
 
-#include <stdexcept>
 #include "int_vector.hpp"
+
+#include <stdexcept>
 
 namespace sdsl
 {
@@ -453,10 +454,10 @@ class sorter
             }
 
             if (0 == min_symbol) {
-                throw (std::logic_error("Text contains 0-symbol. Suffix array can not be constructed."));
+                throw std::logic_error("Text contains 0-symbol. Suffix array can not be constructed.");
             }
             if (x[x.size()-1] > 0) {
-                throw (std::logic_error("Last symbol is not 0-symbol. Suffix array can not be constructed."));
+                throw std::logic_error("Last symbol is not 0-symbol. Suffix array can not be constructed.");
             }
             DBG_OUT<<"sorter: min_symbol="<<min_symbol<<std::endl;
             DBG_OUT<<"sorter: max_symbol="<<max_symbol<<std::endl;
@@ -468,7 +469,7 @@ class sorter
             util::expand_width(x, width);
             sa = x;
             if (sa.width() < x.width()) {
-                throw (std::logic_error("Fixed size suffix array is to small for the specified text."));
+                throw std::logic_error("Fixed size suffix array is to small for the specified text.");
                 return;
             }
 

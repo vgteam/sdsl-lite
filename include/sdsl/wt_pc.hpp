@@ -22,14 +22,14 @@
 #ifndef INCLUDED_SDSL_WT_PC
 #define INCLUDED_SDSL_WT_PC
 
-#include <stdexcept>
 #include "bit_vectors.hpp"
 #include "rank_support.hpp"
 #include "select_support.hpp"
 #include "wt_helper.hpp"
-#include <vector>
-#include <utility>
+#include <stdexcept>
 #include <tuple>
+#include <utility>
+#include <vector>
 
 //! Namespace for the succinct data structure library.
 namespace sdsl
@@ -224,7 +224,7 @@ class wt_pc
                 bv_node_pos[v] = m_tree.bv_pos(v);
             }
             if (input_buf.size() < size) {
-                throw (std::logic_error("Stream size is smaller than size!"));
+                throw std::logic_error("Stream size is smaller than size!");
                 return;
             }
             value_type old_chr = input_buf[0];

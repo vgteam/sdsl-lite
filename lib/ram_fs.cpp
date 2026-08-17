@@ -1,9 +1,9 @@
-#include <stdexcept>
 #include "sdsl/ram_fs.hpp"
 #include "sdsl/util.hpp"
+#include <algorithm>
 #include <cstdio>
 #include <iostream>
-#include <algorithm>
+#include <stdexcept>
 
 static int nifty_counter = 0;
 
@@ -15,7 +15,7 @@ sdsl::ram_fs_initializer::ram_fs_initializer()
 {
     if (0 == nifty_counter++) {
         if (!ram_fs::m_map.empty()) {
-            throw (std::logic_error("Static preinitialized object is not empty."));
+            throw std::logic_error("Static preinitialized object is not empty.");
         }
     }
 }

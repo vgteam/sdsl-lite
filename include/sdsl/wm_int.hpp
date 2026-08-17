@@ -141,7 +141,7 @@ class wm_int
                 return;
             size_type n = buf.size();  // set n
             if (n < m_size) {
-                throw (std::logic_error("n="+util::to_string(n)+" < "+util::to_string(m_size)+"=m_size"));
+                throw std::logic_error("n="+util::to_string(n)+" < "+util::to_string(m_size)+"=m_size");
                 return;
             }
             m_sigma = 0; // init sigma

@@ -5,21 +5,21 @@
 #ifndef INCLUDED_SDSL_MEMORY_MANAGEMENT
 #define INCLUDED_SDSL_MEMORY_MANAGEMENT
 
-#include <stdexcept>
-#include <system_error>
-#include <new>
 #include "uintx_t.hpp"
 #include "util.hpp"
 
-#include <map>
-#include <iostream>
-#include <cstdlib>
-#include <mutex>
 #include <chrono>
-#include <cstring>
-#include <set>
 #include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <map>
+#include <mutex>
+#include <new>
+#include <set>
 #include <stack>
+#include <stdexcept>
+#include <system_error>
 #include <vector>
 #include "config.hpp"
 #include <fcntl.h>
@@ -252,14 +252,14 @@ class hugepage_allocator
                                     (PROT_READ | PROT_WRITE),
                                     (MAP_HUGETLB | MAP_ANONYMOUS | MAP_PRIVATE), 0, 0);
             if (m_base == MAP_FAILED) {
-                throw (std::system_error(ENOMEM, std::system_category(), "hugepage_allocator could not allocate hugepages"));
+                throw std::system_error(ENOMEM, std::system_category(), "hugepage_allocator could not allocate hugepages");
             } else {
                 // init the allocator
                 m_top = m_base;
                 m_first_block = (mm_block_t*)m_base;
             }
 #else
-            throw (std::system_error(ENOMEM, std::system_category(), "hugepage_allocator: MAP_HUGETLB / hugepage support not available"));
+            throw std::system_error(ENOMEM, std::system_category(), "hugepage_allocator: MAP_HUGETLB / hugepage support not available");
 #endif
         }
         void* mm_realloc(void* ptr, size_t size);
@@ -326,7 +326,7 @@ class memory_manager
 #endif
             uint64_t* temp = (uint64_t*)realloc(ptr, size);
             if (temp == NULL) {
-                throw (std::bad_alloc());
+                throw std::bad_alloc();
             }
             return temp;
         }
@@ -338,7 +338,7 @@ class memory_manager
             hugepage_allocator::the_allocator().init(bytes);
             m.hugepages = true;
 #else
-            throw (std::runtime_error("hugepages not support on MSVC_COMPILER"));
+            throw std::runtime_error("hugepages not support on MSVC_COMPILER");
 #endif
         }
         template<class t_vec>
@@ -356,7 +356,7 @@ class memory_manager
                 size_t allocated_bytes = (size_t)(((size + 64) >> 6) << 3);
                 v.m_data = memory_manager::realloc_mem(v.m_data, allocated_bytes);
                 if (allocated_bytes != 0 && v.m_data == nullptr) {
-                    throw (std::bad_alloc());
+                    throw std::bad_alloc();
                 }
                 // update and fill with 0s
                 if (v.bit_size() < v.capacity()) {
