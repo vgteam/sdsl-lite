@@ -135,7 +135,8 @@ class int_vector_mapper
             {
                 std::ifstream f(filename,std::ifstream::binary);
                 if (!f.is_open()) {
-                    throw std::runtime_error("int_vector_mapper: file does not exist.");
+                    throw std::runtime_error(
+                        "int_vector_mapper: file does not exist.");
                 }
                 if (!is_plain) {
                     int_vector<t_width>::read_header(size_in_bits, int_width, f);

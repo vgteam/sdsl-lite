@@ -24,9 +24,6 @@ along with this program.  If not, see http://www.gnu.org/licenses/ .
 #include "bits.hpp"
 #include <array>
 #include <math.h>
-#include <algorithm>
-#include "bits.hpp"
-#include "util.hpp"
 
 namespace sdsl
 {

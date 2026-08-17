@@ -33,7 +33,6 @@
 #include "ram_fs.hpp"
 #include "sfstream.hpp"
 
-#include <cstdint>
 #include <iosfwd>    // forward declaration of ostream
 #include <new>
 #include <stdexcept> // for exceptions
