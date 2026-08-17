@@ -15,41 +15,14 @@
     along with this program.  If not, see http://www.gnu.org/licenses/ .
 */
 /*! \file error_handling.hpp
-    \brief error_handling.hpp contains SDSL_THROW and related macros, which
-           sdsl-lite uses to report unrecoverable errors, so that the
-           error-reporting mechanism can be selected at build time.
+    \brief error_handling.hpp contains the SDSL_THROW macro, which sdsl-lite
+           uses to report unrecoverable errors.
 */
 #ifndef INCLUDED_SDSL_ERROR_HANDLING
 #define INCLUDED_SDSL_ERROR_HANDLING
 
-// SDSL_THROW always constructs its argument, even when not thrown.
 #include <stdexcept>
-#include <new>
-#include <system_error>
-#include <cerrno>
-
-/*
- * SDSL_THROW(exception) throws the given exception object, unless
- * SDSL_NO_EXCEPTIONS is defined, in which case it logs exception.what() and
- * calls std::abort() instead (via Abseil if SDSL_USE_ABSEIL_LOGGING is set).
- */
-
-#if defined(SDSL_NO_EXCEPTIONS)
-
-#if defined(SDSL_USE_ABSEIL_LOGGING)
-#include "absl/log/absl_log.h"
-#define SDSL_THROW(exception) ABSL_LOG(FATAL) << (exception).what()
-#else
-#include <cstdlib>
-#include <iostream>
-#define SDSL_THROW(exception) \
-    do { std::cerr << (exception).what() << std::endl; std::abort(); } while (0)
-#endif
-
-#else
 
 #define SDSL_THROW(exception) throw (exception)
-
-#endif
 
 #endif

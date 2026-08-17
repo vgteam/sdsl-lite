@@ -162,9 +162,6 @@ TYPED_TEST(rle_vector_test, special_cases)
     ASSERT_EQ(ss(rlv.ones() + 1), rlv.size());
 }
 
-#ifndef SDSL_NO_EXCEPTIONS
-// With SDSL_NO_EXCEPTIONS these failure paths abort instead of throwing, so
-// ASSERT_THROW can't catch them.
 TYPED_TEST(rle_vector_test, builder_exceptions)
 {
     {
@@ -179,7 +176,6 @@ TYPED_TEST(rle_vector_test, builder_exceptions)
         ASSERT_THROW(builder.set(1024), std::runtime_error);
     }
 }
-#endif
 
 } // end namespace
 

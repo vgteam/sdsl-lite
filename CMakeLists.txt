@@ -27,21 +27,6 @@ option(CODE_COVERAGE "Set ON to add code coverage compile options" OFF)
 option(GENERATE_DOC "Set ON to generate doxygen API reference in build/doc directory" OFF)
 option(WITH_GOOGLETEST "Set ON to install google test along with the library" ON)
 
-# Some embedders (e.g. Google's DeepVariant) build with -fno-exceptions.
-option(SDSL_USE_EXCEPTIONS "Report fatal errors by throwing C++ exceptions" ON)
-# Only takes effect when SDSL_USE_EXCEPTIONS is off.
-option(SDSL_USE_ABSEIL_LOGGING "Use Abseil logging to report fatal errors when exceptions are off" OFF)
-
-if(NOT SDSL_USE_EXCEPTIONS)
-    message("sdsl-lite: building without C++ exceptions")
-    if(SDSL_USE_ABSEIL_LOGGING)
-        find_package(absl REQUIRED)
-        message("sdsl-lite: fatal errors reported via Abseil ABSL_LOG(FATAL)")
-    else()
-        message("sdsl-lite: fatal errors reported via stderr and std::abort()")
-    endif()
-endif()
-
 # Adds an int_vector constructor that wraps a caller-supplied buffer instead
 # of allocating its own.
 option(SDSL_ENABLE_SHARED_MEMORY "Enable int_vector's constructor for wrapping externally-owned memory" OFF)
@@ -163,12 +148,6 @@ target_include_directories(sdsl PUBLIC include)
 # pkg-config consumers don't see the sdsl CMake target's PUBLIC compile
 # definitions (see lib/CMakeLists.txt), so Cflags needs to carry them too.
 set(SDSL_PC_CFLAGS_EXTRA "")
-if(NOT SDSL_USE_EXCEPTIONS)
-    string(APPEND SDSL_PC_CFLAGS_EXTRA " -DSDSL_NO_EXCEPTIONS")
-    if(SDSL_USE_ABSEIL_LOGGING)
-        string(APPEND SDSL_PC_CFLAGS_EXTRA " -DSDSL_USE_ABSEIL_LOGGING")
-    endif()
-endif()
 if(SDSL_ENABLE_SHARED_MEMORY)
     string(APPEND SDSL_PC_CFLAGS_EXTRA " -DSDSL_ENABLE_SHARED_MEMORY")
 endif()

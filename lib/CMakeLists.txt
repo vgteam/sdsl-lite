@@ -27,16 +27,6 @@ set_target_properties(sdsl PROPERTIES
         #	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../examples"
 )
 
-# PUBLIC: sdsl-lite's headers are templates, so consumer code needs these
-# same defines or it'll compile different template bodies than libsdsl.
-if(NOT SDSL_USE_EXCEPTIONS)
-    target_compile_definitions(sdsl PUBLIC SDSL_NO_EXCEPTIONS)
-    if(SDSL_USE_ABSEIL_LOGGING)
-        target_compile_definitions(sdsl PUBLIC SDSL_USE_ABSEIL_LOGGING)
-        target_link_libraries(sdsl PUBLIC absl::log absl::absl_log)
-    endif()
-endif()
-
 if(SDSL_ENABLE_SHARED_MEMORY)
     target_compile_definitions(sdsl PUBLIC SDSL_ENABLE_SHARED_MEMORY)
 endif()
