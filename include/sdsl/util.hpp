@@ -301,7 +301,7 @@ void clear(T& x)
  *  swap p1 and p2 before we use this method.
  */
 template<class S, class P>
-void swap_support(S& s1, S& s2, const P* p1, const P* p2)
+void swap_support(S& s1, S& s2, const P* p1, const P* p2) noexcept
 {
     s1.swap(s2);
     s1.set_vector(p1);

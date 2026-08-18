@@ -106,9 +106,9 @@ class rank_support_v : public rank_support
         }
 
         rank_support_v(const rank_support_v&)  = default;
-        rank_support_v(rank_support_v&&) = default;
+        rank_support_v(rank_support_v&&) noexcept = default;
         rank_support_v& operator=(const rank_support_v&) = default;
-        rank_support_v& operator=(rank_support_v&&) = default;
+        rank_support_v& operator=(rank_support_v&&) noexcept = default;
 
 
         size_type rank(size_type idx) const {
@@ -123,7 +123,7 @@ class rank_support_v : public rank_support
                 return  *p + ((*(p+1)>>(63 - 9*((idx&0x1FF)>>6)))&0x1FF);
         }
 
-        inline size_type operator()(size_type idx)const {
+        inline size_type operator()(size_type idx) const {
             return rank(idx);
         }
 
@@ -151,13 +151,13 @@ class rank_support_v : public rank_support
             m_v = v;
         }
 
-        void swap(rank_support_v& rs) {
+        void swap(rank_support_v& rs) noexcept {
             if (this != &rs) { // if rs and _this_ are not the same object
                 m_basic_block.swap(rs.m_basic_block);
             }
         }
 };
 
-}// end namespace sds
+}// end namespace sdsl
 
 #endif // end file

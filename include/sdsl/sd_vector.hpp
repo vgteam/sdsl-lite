@@ -339,7 +339,7 @@ class sd_vector
             copy(sd);
         }
 
-        sd_vector(sd_vector&& sd)
+        sd_vector(sd_vector&& sd) noexcept
         {
             *this = std::move(sd);
         }
@@ -547,7 +547,7 @@ class sd_vector
 //-----------------------------------------------------------------------------
 
         //! Swap method
-        void swap(sd_vector& v)
+        void swap(sd_vector& v) noexcept
         {
             if (this != &v) {
                 std::swap(m_size, v.m_size);
@@ -582,7 +582,7 @@ class sd_vector
             return *this;
         }
 
-        sd_vector& operator=(sd_vector&& v)
+        sd_vector& operator=(sd_vector&& v) noexcept
         {
             if (this != &v) {
                 m_size = v.m_size;

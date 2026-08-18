@@ -378,7 +378,7 @@ class int_vector
         }
 
         //! Move constructor.
-        int_vector(int_vector&& v);
+        int_vector(int_vector&& v) noexcept;
 
         //! Copy constructor.
         int_vector(const int_vector& v);
@@ -403,7 +403,7 @@ class int_vector
         }
 
         //! Swap method for int_vector.
-        void swap(int_vector& v);
+        void swap(int_vector& v) noexcept;
 
         //! Resize the int_vector in terms of elements.
         /*! \param size The size to resize the int_vector in terms of elements.
@@ -566,7 +566,7 @@ class int_vector
         int_vector& operator=(const int_vector& v);
 
         //! Move assignment operator.
-        int_vector& operator=(int_vector&& v);
+        int_vector& operator=(int_vector&& v) noexcept;
 
         //! Equality operator for two int_vectors.
         /*! Two int_vectors are equal if
@@ -1339,7 +1339,7 @@ inline int_vector<t_width>::int_vector(size_type size, uint8_t int_width, uint64
 #endif
 
 template<uint8_t t_width>
-inline int_vector<t_width>::int_vector(int_vector&& v) :
+inline int_vector<t_width>::int_vector(int_vector&& v) noexcept:
     m_size(v.m_size), m_data(v.m_data), m_width(v.m_width)
 #ifdef SDSL_ENABLE_SHARED_MEMORY
     , shared_memory_flag(v.loaded_from_shared_memory())
@@ -1391,7 +1391,7 @@ int_vector<t_width>& int_vector<t_width>::operator=(const int_vector& v)
 }
 
 template<uint8_t t_width>
-int_vector<t_width>& int_vector<t_width>::operator=(int_vector&& v)
+int_vector<t_width>& int_vector<t_width>::operator=(int_vector&& v) noexcept
 {
     swap(v);
     return *this;
@@ -1408,7 +1408,7 @@ int_vector<t_width>::~int_vector()
 }
 
 template<uint8_t t_width>
-void int_vector<t_width>::swap(int_vector& v)
+void int_vector<t_width>::swap(int_vector& v) noexcept
 {
     if (this != &v) { // if v and _this_ are not the same object
         size_type size     = m_size;

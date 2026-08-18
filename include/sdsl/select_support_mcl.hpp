@@ -89,7 +89,7 @@ class select_support_mcl : public select_support
     public:
         explicit select_support_mcl(const bit_vector* v=nullptr);
         select_support_mcl(const select_support_mcl<t_b,t_pat_len>& ss);
-        select_support_mcl(select_support_mcl<t_b,t_pat_len>&& ss);
+        select_support_mcl(select_support_mcl<t_b,t_pat_len>&& ss) noexcept;
         ~select_support_mcl();
         void init_slow(const bit_vector* v=nullptr);
         //! Select function
@@ -100,8 +100,8 @@ class select_support_mcl : public select_support
         void load(std::istream& in, const bit_vector* v=nullptr);
         void set_vector(const bit_vector* v=nullptr);
         select_support_mcl<t_b, t_pat_len>& operator=(const select_support_mcl& ss);
-        select_support_mcl<t_b, t_pat_len>& operator=(select_support_mcl&&);
-        void swap(select_support_mcl<t_b, t_pat_len>& ss);
+        select_support_mcl<t_b, t_pat_len>& operator=(select_support_mcl&&) noexcept;
+        void swap(select_support_mcl<t_b, t_pat_len>& ss) noexcept;
 };
 
 
@@ -122,7 +122,7 @@ select_support_mcl<t_b,t_pat_len>::select_support_mcl(const select_support_mcl& 
 }
 
 template<uint8_t t_b, uint8_t t_pat_len>
-select_support_mcl<t_b,t_pat_len>::select_support_mcl(select_support_mcl&& ss) : select_support(ss.m_v)
+select_support_mcl<t_b,t_pat_len>::select_support_mcl(select_support_mcl&& ss) noexcept : select_support(ss.m_v)
 {
     *this = std::move(ss);
 }
@@ -137,7 +137,7 @@ select_support_mcl<t_b, t_pat_len>& select_support_mcl<t_b,t_pat_len>::operator=
 }
 
 template<uint8_t t_b, uint8_t t_pat_len>
-select_support_mcl<t_b, t_pat_len>& select_support_mcl<t_b,t_pat_len>::operator=(select_support_mcl&& ss)
+select_support_mcl<t_b, t_pat_len>& select_support_mcl<t_b,t_pat_len>::operator=(select_support_mcl&& ss) noexcept
 {
     if (this != &ss) {
         m_logn       = ss.m_logn;      // copy log n
@@ -159,7 +159,7 @@ select_support_mcl<t_b, t_pat_len>& select_support_mcl<t_b,t_pat_len>::operator=
 }
 
 template<uint8_t t_b, uint8_t t_pat_len>
-void select_support_mcl<t_b,t_pat_len>::swap(select_support_mcl& ss)
+void select_support_mcl<t_b,t_pat_len>::swap(select_support_mcl& ss) noexcept
 {
     std::swap(m_logn, ss.m_logn);
     std::swap(m_logn2, ss.m_logn2);

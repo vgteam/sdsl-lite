@@ -47,9 +47,9 @@ class rank_support
         rank_support(const bit_vector* v = nullptr);
         //! Copy constructor
         rank_support(const rank_support&) = default;
-        rank_support(rank_support&&) = default;
+        rank_support(rank_support&&) noexcept = default;
         rank_support& operator=(const rank_support&) = default;
-        rank_support& operator=(rank_support&&) = default;
+        rank_support& operator=(rank_support&&) noexcept = default;
         //! Destructor
         virtual ~rank_support() {}
 
