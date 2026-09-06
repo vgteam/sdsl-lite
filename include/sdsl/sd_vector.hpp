@@ -446,7 +446,12 @@ class sd_vector
         {
             size_type low_width = 1;
             // Multisets with too many ones will have width 1.
-            if (ones > 0 && ones <= universe) {
+            if (ones == 0) {
+                // If all bits are unset, we want a single bucket and low width log n.
+                if (universe > 0) {
+                    low_width = bits::length(universe - 1);
+                }
+            } else if (ones <= universe) {
                 double ideal_width = std::log2((static_cast<double>(universe) * std::log(2.0)) / static_cast<double>(ones));
                 low_width = std::round(std::max(ideal_width, 1.0));
             }
