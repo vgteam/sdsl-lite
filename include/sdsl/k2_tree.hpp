@@ -25,9 +25,9 @@
 #include <queue>
 #include <stdexcept>
 #include <tuple>
-#include "sdsl/bit_vectors.hpp"
-#include "sdsl/k2_tree_helper.hpp"
-#include "sdsl/int_vector_buffer.hpp"
+#include "bit_vectors.hpp"
+#include "k2_tree_helper.hpp"
+#include "int_vector_buffer.hpp"
 
 
 //! Namespace for the succint data structure library

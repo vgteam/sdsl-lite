@@ -9,6 +9,7 @@
 #include <vector>
 #include <utility>
 #include <array>
+#include <stdexcept>
 
 namespace sdsl
 {

@@ -29,6 +29,7 @@
 #include <vector>
 #include <iostream>
 #include <cctype>
+#include <stdexcept>
 
 namespace sdsl
 {

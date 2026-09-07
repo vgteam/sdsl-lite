@@ -27,6 +27,10 @@ option(CODE_COVERAGE "Set ON to add code coverage compile options" OFF)
 option(GENERATE_DOC "Set ON to generate doxygen API reference in build/doc directory" OFF)
 option(WITH_GOOGLETEST "Set ON to install google test along with the library" ON)
 
+# Adds an int_vector constructor that wraps a caller-supplied buffer instead
+# of allocating its own.
+option(SDSL_ENABLE_SHARED_MEMORY "Enable int_vector's constructor for wrapping externally-owned memory" OFF)
+
 # C++17 compiler Check
 if(CMAKE_CXX_COMPILER MATCHES ".*clang.*" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
       set(CMAKE_COMPILER_IS_CLANGXX 1)
@@ -140,6 +144,13 @@ ADD_CUSTOM_TARGET(uninstall-sdsl
   "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/CMakeModules/cmake_uninstall.cmake")
 
 target_include_directories(sdsl PUBLIC include)
+
+# pkg-config consumers don't see the sdsl CMake target's PUBLIC compile
+# definitions (see lib/CMakeLists.txt), so Cflags needs to carry them too.
+set(SDSL_PC_CFLAGS_EXTRA "")
+if(SDSL_ENABLE_SHARED_MEMORY)
+    string(APPEND SDSL_PC_CFLAGS_EXTRA " -DSDSL_ENABLE_SHARED_MEMORY")
+endif()
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/sdsl-lite.pc.cmake"
                "${CMAKE_CURRENT_BINARY_DIR}/sdsl-lite.pc" @ONLY)

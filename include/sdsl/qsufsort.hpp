@@ -38,7 +38,9 @@
 
 #define DBG_OUT if(0)std::cout
 
-#include <sdsl/int_vector.hpp>
+#include "int_vector.hpp"
+
+#include <stdexcept>
 
 namespace sdsl
 {

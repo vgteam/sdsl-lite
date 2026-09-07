@@ -30,6 +30,7 @@
 #include "iterators.hpp"
 
 #include <cmath>
+#include <stdexcept>
 
 //! Namespace for the succinct data structure library
 namespace sdsl

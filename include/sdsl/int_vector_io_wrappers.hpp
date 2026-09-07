@@ -14,9 +14,9 @@
 #ifndef INCLUDE_SDSL_INT_VECTOR_IO_WRAPPERS
 #define INCLUDE_SDSL_INT_VECTOR_IO_WRAPPERS
 
-#include <sdsl/int_vector.hpp>
-#include <sdsl/util.hpp>
-#include <sdsl/coder.hpp>
+#include "int_vector.hpp"
+#include "util.hpp"
+#include "coder.hpp"
 
 #include <iostream>
 

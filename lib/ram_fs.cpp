@@ -1,8 +1,9 @@
 #include "sdsl/ram_fs.hpp"
 #include "sdsl/util.hpp"
+#include <algorithm>
 #include <cstdio>
 #include <iostream>
-#include <algorithm>
+#include <stdexcept>
 
 static int nifty_counter = 0;
 

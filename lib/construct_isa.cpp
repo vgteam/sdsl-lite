@@ -2,6 +2,7 @@
     Copyright (C) 2010 Simon Gog
 */
 #include "sdsl/construct_isa.hpp"
+#include <ios>
 #include <string>
 
 namespace sdsl

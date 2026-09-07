@@ -8,4 +8,4 @@ Description: @PROJECT_DESCRIPTION@
 Version: @PROJECT_VERSION_FULL@
 URL: @PROJECT_URL@
 Libs: -L${libdir} -lsdsl -ldivsufsort -ldivsufsort64
-Cflags: -I${includedir}
+Cflags: -I${includedir}@SDSL_PC_CFLAGS_EXTRA@

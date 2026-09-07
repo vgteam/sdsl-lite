@@ -6,6 +6,7 @@
 
 #include <cstdio>
 #include <ios>
+#include <stdexcept>
 
 namespace sdsl
 {

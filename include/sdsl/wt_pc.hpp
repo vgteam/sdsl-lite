@@ -26,9 +26,10 @@
 #include "rank_support.hpp"
 #include "select_support.hpp"
 #include "wt_helper.hpp"
-#include <vector>
-#include <utility>
+#include <stdexcept>
 #include <tuple>
+#include <utility>
+#include <vector>
 
 //! Namespace for the succinct data structure library.
 namespace sdsl

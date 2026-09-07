@@ -8,15 +8,18 @@
 #include "uintx_t.hpp"
 #include "util.hpp"
 
-#include <map>
-#include <iostream>
-#include <cstdlib>
-#include <mutex>
 #include <chrono>
-#include <cstring>
-#include <set>
 #include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <map>
+#include <mutex>
+#include <new>
+#include <set>
 #include <stack>
+#include <stdexcept>
+#include <system_error>
 #include <vector>
 #include "config.hpp"
 #include <fcntl.h>

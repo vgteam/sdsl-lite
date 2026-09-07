@@ -21,7 +21,7 @@ along with this program.  If not, see http://www.gnu.org/licenses/ .
 #ifndef SDSL_CODER_COMMA_INCLUDED
 #define SDSL_CODER_COMMA_INCLUDED
 
-#include <sdsl/bits.hpp>
+#include "bits.hpp"
 #include <array>
 #include <math.h>
 

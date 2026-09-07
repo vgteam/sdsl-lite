@@ -26,3 +26,7 @@ set_target_properties(sdsl PROPERTIES
         #	DEFINE_SYMBOL SDSL_BUILD_DLL
         #	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../examples"
 )
+
+if(SDSL_ENABLE_SHARED_MEMORY)
+    target_compile_definitions(sdsl PUBLIC SDSL_ENABLE_SHARED_MEMORY)
+endif()

@@ -27,6 +27,7 @@
 #include "construct_lcp.hpp"
 #include "construct_bwt.hpp"
 #include "construct_sa.hpp"
+#include <stdexcept>
 #include <string>
 
 namespace sdsl

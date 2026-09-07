@@ -25,6 +25,8 @@
 #include "coder_elias_delta.hpp"
 #include "iterators.hpp"
 
+#include <stdexcept>
+
 //! Namespace for the succinct data structure library.
 namespace sdsl
 {

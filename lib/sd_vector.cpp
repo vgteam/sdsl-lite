@@ -2,6 +2,7 @@
 #include "sdsl/simple_sds.hpp"
 
 #include <cassert>
+#include <stdexcept>
 
 //! Namespace for the succinct data structure library
 namespace sdsl

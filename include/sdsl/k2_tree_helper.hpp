@@ -24,7 +24,7 @@
 #include <cmath>
 #include <iostream>
 
-#include "sdsl/bit_vectors.hpp"
+#include "bit_vectors.hpp"
 
 //! Namespace for the succinct data structure library.
 namespace sdsl

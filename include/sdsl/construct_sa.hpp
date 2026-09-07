@@ -33,6 +33,8 @@
 #include "construct_sa_se.hpp"
 #include "construct_config.hpp"
 
+#include <stdexcept>
+
 namespace sdsl
 {
 
