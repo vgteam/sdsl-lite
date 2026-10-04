@@ -118,10 +118,17 @@ class memory_monitor
         memory_monitor(const memory_monitor&) = delete;
         memory_monitor& operator=(const memory_monitor&) = delete;
     private:
+        // The monitor is created on first use and never destroyed, so that
+        // static objects whose destructors call record() (e.g. static
+        // int_vectors) can still use it at exit. s_monitor and s_monitor_once
+        // are constant-initialized, so they are ready before any dynamic
+        // initialization runs.
+        static memory_monitor* s_monitor;
+        static std::once_flag s_monitor_once;
         static memory_monitor& the_monitor()
         {
-            static memory_monitor m;
-            return m;
+            std::call_once(s_monitor_once, [] { s_monitor = new memory_monitor(); });
+            return *s_monitor;
         }
     public:
         static void granularity(std::chrono::milliseconds ms)
@@ -275,10 +282,15 @@ class hugepage_allocator
             }
             return false;
         }
+        // Created on first use and never destroyed, for the same reason as
+        // memory_monitor::the_monitor(): int_vector destructors reach mm_free()
+        // at exit when hugepages are enabled.
+        static hugepage_allocator* s_allocator;
+        static std::once_flag s_allocator_once;
         static hugepage_allocator& the_allocator()
         {
-            static hugepage_allocator a;
-            return a;
+            std::call_once(s_allocator_once, [] { s_allocator = new hugepage_allocator(); });
+            return *s_allocator;
         }
 };
 #endif

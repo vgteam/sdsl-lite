@@ -7,6 +7,9 @@ using namespace std::chrono;
 namespace sdsl
 {
 
+memory_monitor* memory_monitor::s_monitor = nullptr;
+std::once_flag memory_monitor::s_monitor_once;
+
 void output_event_json(std::ostream& out,const memory_monitor::mm_event& ev,const memory_monitor& m)
 {
     out << "\t\t" << "\"name\" : " << "\"" << ev.name << "\",\n";
@@ -294,6 +297,9 @@ block_markused(mm_block_t* ptr)
 }
 
 #ifndef MSVC_COMPILER
+hugepage_allocator* hugepage_allocator::s_allocator = nullptr;
+std::once_flag hugepage_allocator::s_allocator_once;
+
 void
 hugepage_allocator::coalesce_block(mm_block_t* block)
 {
