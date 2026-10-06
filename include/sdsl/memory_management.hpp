@@ -128,7 +128,7 @@ class memory_monitor
         //
         // The approach is to make sure that the storage is set up with
         // constant/zero-initialization, and to make sure that all users *can't* 
-        // be constant- or zero-initialized and always needs "dynamic" static
+        // be constant- or zero-initialized and always need "dynamic" static
         // initialization (which is constrained to happen later).
         //
         // Then we use the constant-initialized storage to store a lazily populated
