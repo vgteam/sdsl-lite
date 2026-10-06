@@ -118,10 +118,27 @@ class memory_monitor
         memory_monitor(const memory_monitor&) = delete;
         memory_monitor& operator=(const memory_monitor&) = delete;
     private:
+        // The monitor can be used in destructors of e.g. int_vectors. Those users
+        // may in turn be statically-initialized. Statically-initialized objects
+        // (such as the storage used to find the monitor) are destroyed before
+        // program exit. We need to make sure the storage used to find the monitor
+        // is destroyed *after* anything that can use the monitor in its
+        // destructor, which means we need to make sure it is initialized before
+        // the users.
+        //
+        // The approach is to make sure that the storage is set up with
+        // constant/zero-initialization, and to make sure that all users *can't* 
+        // be constant- or zero-initialized and always need "dynamic" static
+        // initialization (which is constrained to happen later).
+        //
+        // Then we use the constant-initialized storage to store a lazily populated
+        // pointer to the actual monitor.
+        static memory_monitor* s_monitor;
+        static std::once_flag s_monitor_once;
         static memory_monitor& the_monitor()
         {
-            static memory_monitor m;
-            return m;
+            std::call_once(s_monitor_once, [] { s_monitor = new memory_monitor(); });
+            return *s_monitor;
         }
     public:
         static void granularity(std::chrono::milliseconds ms)
@@ -275,10 +292,16 @@ class hugepage_allocator
             }
             return false;
         }
+        // We use the same approach as memory_monitor for creating a
+        // singleton that's safe to use in destructors of
+        // static-storage-duration objects. All classes using the
+        // allocator in their destructors must be set up so they
+        // cannot be constant- or zero-initialized.
+        static std::once_flag s_allocator_once;
         static hugepage_allocator& the_allocator()
         {
-            static hugepage_allocator a;
-            return a;
+            std::call_once(s_allocator_once, [] { s_allocator = new hugepage_allocator(); });
+            return *s_allocator;
         }
 };
 #endif
