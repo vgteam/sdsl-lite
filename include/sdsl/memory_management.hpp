@@ -118,11 +118,21 @@ class memory_monitor
         memory_monitor(const memory_monitor&) = delete;
         memory_monitor& operator=(const memory_monitor&) = delete;
     private:
-        // The monitor is created on first use and never destroyed, so that
-        // static objects whose destructors call record() (e.g. static
-        // int_vectors) can still use it at exit. s_monitor and s_monitor_once
-        // are constant-initialized, so they are ready before any dynamic
-        // initialization runs.
+        // The monitor can be used in destructors of e.g. int_vectors. Those users
+        // may in turn be statically-initialized. Statically-initialized objects
+        // (such as the storage used to find the monitor) are destroyed before
+        // program exit. We need to make sure the storage used to find the monitor
+        // is destroyed *after* anything that can use the monitor in its
+        // destructor, which means we need to make sure it is initialized before
+        // the users.
+        //
+        // The approach is to make sure that the storage is set up with
+        // constant/zero-initialization, and to make sure that all users *can't* 
+        // be constant- or zero-initialized and always needs "dynamic" static
+        // initialization (which is constrained to happen later).
+        //
+        // Then we use the constant-initialized storage to store a lazily populated
+        // pointer to the actual monitor.
         static memory_monitor* s_monitor;
         static std::once_flag s_monitor_once;
         static memory_monitor& the_monitor()
@@ -282,10 +292,11 @@ class hugepage_allocator
             }
             return false;
         }
-        // Created on first use and never destroyed, for the same reason as
-        // memory_monitor::the_monitor(): int_vector destructors reach mm_free()
-        // at exit when hugepages are enabled.
-        static hugepage_allocator* s_allocator;
+        // We use the same approach as memory_monitor for creating a
+        // singleton that's safe to use in destructors of
+        // static-storage-duration objects. All classes using the
+        // allocator in their destructors must be set up so they
+        // cannot be constant- or zero-initialized.
         static std::once_flag s_allocator_once;
         static hugepage_allocator& the_allocator()
         {
