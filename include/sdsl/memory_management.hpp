@@ -297,6 +297,7 @@ class hugepage_allocator
         // static-storage-duration objects. All classes using the
         // allocator in their destructors must be set up so they
         // cannot be constant- or zero-initialized.
+        static hugepage_allocator* s_allocator;
         static std::once_flag s_allocator_once;
         static hugepage_allocator& the_allocator()
         {
