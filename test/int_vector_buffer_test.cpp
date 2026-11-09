@@ -445,6 +445,10 @@ TEST_F(int_vector_buffer_test, file_handling)
     test_file_handling< sdsl::int_vector_buffer<16>, sdsl::int_vector<16> >(16);
     test_file_handling< sdsl::int_vector_buffer<32>, sdsl::int_vector<32> >(32);
     test_file_handling< sdsl::int_vector_buffer<64>, sdsl::int_vector<64> >(64);
+}
+
+TEST_F(int_vector_buffer_test, plain_file_handling)
+{
     test_plain_file_handling< sdsl::int_vector_buffer<> >(8);
     test_plain_file_handling< sdsl::int_vector_buffer<> >(16);
     test_plain_file_handling< sdsl::int_vector_buffer<> >(32);
@@ -453,6 +457,65 @@ TEST_F(int_vector_buffer_test, file_handling)
     test_plain_file_handling< sdsl::int_vector_buffer<16> >(16);
     test_plain_file_handling< sdsl::int_vector_buffer<32> >(32);
     test_plain_file_handling< sdsl::int_vector_buffer<64> >(64);
+}
+
+template<uint8_t t_width, class Value>
+void test_plain_array_bytes()
+{
+    const uint8_t width = sizeof(Value) * 8;
+    SCOPED_TRACE(static_cast<int>(t_width));
+    SCOPED_TRACE(static_cast<int>(width));
+    const std::string filename = temp_dir + "/plain_array_bytes";
+    const size_type buffer_bytes = 3;
+    sdsl::int_vector<t_width> values(19, 0, width);
+    std::vector<uint8_t> expected;
+    for (size_type i = 0; i < values.size(); ++i) {
+        const Value value = static_cast<Value>(UINT64_C(0x1122334455667788) - i);
+        values[i] = value;
+        for (size_t byte = 0; byte < sizeof(Value); ++byte) {
+            expected.push_back(static_cast<uint8_t>(value >> (8 * byte)));
+        }
+    }
+
+    {
+        std::ofstream fixture(filename, std::ios::binary);
+        fixture.write(reinterpret_cast<const char*>(expected.data()), expected.size());
+        ASSERT_TRUE(fixture.good());
+    }
+    {
+        sdsl::int_vector_buffer<t_width> input(filename, std::ios::in, buffer_bytes, width, true);
+        ASSERT_EQ(values.size(), input.size());
+        for (size_type i = 0; i < values.size(); ++i) {
+            EXPECT_EQ(values[i], static_cast<value_type>(input[i])) << "at " << i;
+        }
+    }
+    const auto read_bytes = [&] {
+        std::ifstream input(filename, std::ios::binary);
+        return std::vector<uint8_t>(std::istreambuf_iterator<char>(input), {});
+    };
+    {
+        sdsl::int_vector_buffer<t_width> output(filename, std::ios::out, buffer_bytes, width, true);
+        for (size_type i = 0; i < values.size(); ++i) {
+            output.push_back(values[i]);
+        }
+    }
+    EXPECT_EQ(expected, read_bytes()) << "int_vector_buffer output";
+
+    ASSERT_TRUE(sdsl::store_to_plain_array<Value>(values, filename));
+    EXPECT_EQ(expected, read_bytes()) << "store_to_plain_array output";
+    sdsl::remove(filename);
+}
+
+TEST_F(int_vector_buffer_test, plain_array_bytes)
+{
+    test_plain_array_bytes<0, uint8_t>();
+    test_plain_array_bytes<0, uint16_t>();
+    test_plain_array_bytes<0, uint32_t>();
+    test_plain_array_bytes<0, uint64_t>();
+    test_plain_array_bytes<8, uint8_t>();
+    test_plain_array_bytes<16, uint16_t>();
+    test_plain_array_bytes<32, uint32_t>();
+    test_plain_array_bytes<64, uint64_t>();
 }
 
 
