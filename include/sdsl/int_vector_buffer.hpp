@@ -64,12 +64,31 @@ class int_vector_buffer
                 m_ifile.seekg(m_offset+(m_begin*width())/8);
                 assert(m_ifile.good());
                 m_ifile.read((char*) m_buffer.data(), (m_buffersize*width())/8);
-                if ((uint64_t)m_ifile.gcount() < (m_buffersize*width())/8) {
+                const auto bytes = static_cast<uint64_t>(m_ifile.gcount());
+                if (bytes < (m_buffersize*width())/8) {
                     m_ifile.clear();
                 }
                 assert(m_ifile.good());
+                convert_plain_block(bytes);
                 for (uint64_t i=m_size-m_begin; i<m_buffersize; ++i) {
                     m_buffer[i] = 0;
+                }
+            }
+        }
+
+        //! Convert between little-endian plain files and the native buffer layout.
+        void convert_plain_block(uint64_t bytes)
+        {
+            if constexpr (t_width == 0 || t_width == 16 || t_width == 32 || t_width == 64) {
+                if (m_offset != 0 || detail::is_little_endian()) {
+                    return;
+                }
+                // Dynamic-width elements are packed from the low end of each
+                // word, so reverse the entire word even when it is partly used.
+                const uint64_t unit = t_width == 0 ? sizeof(uint64_t) : t_width / 8;
+                auto* data = reinterpret_cast<unsigned char*>(m_buffer.data());
+                for (uint64_t offset = 0; offset < bytes; offset += unit) {
+                    std::reverse(data + offset, data + offset + unit);
                 }
             }
         }
@@ -80,7 +99,13 @@ class int_vector_buffer
             if (m_need_to_write) {
                 m_ofile.seekp(m_offset+(m_begin*width())/8);
                 assert(m_ofile.good());
-                if (m_begin+m_buffersize >= m_size) {
+                if (m_offset == 0) {
+                    const uint64_t elements = std::min(m_size - m_begin, m_buffersize);
+                    const uint64_t bytes = elements * (width() / 8);
+                    convert_plain_block(bytes);
+                    m_ofile.write((char*) m_buffer.data(), bytes);
+                    convert_plain_block(bytes);
+                } else if (m_begin+m_buffersize >= m_size) {
                     //last block in file
                     uint64_t wb = ((m_size-m_begin)*width()+7)/8;
                     m_ofile.write((char*) m_buffer.data(), wb);
@@ -137,7 +162,7 @@ class int_vector_buffer
          *  \param buffersize Buffersize in bytes. This has to be a multiple of 8, if not the next multiple of 8 will be taken
          *  \param int_width  The width of each integer.
          *  \param is_plain   If false (default) the file will be interpreted as int_vector.
-         *                    If true the file will be interpreted as plain array with t_width bits per integer.
+         *                    If true the file contains consecutive little-endian integers of the selected width.
          *                    In second case (is_plain==true), t_width must be 8, 16, 32 or 64.
          */
         int_vector_buffer(const std::string filename, std::ios::openmode mode=std::ios::in, const uint64_t buffer_size=1024*1024, const uint8_t int_width=t_width, const bool is_plain=false)
