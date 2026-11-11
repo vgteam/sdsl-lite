@@ -81,8 +81,8 @@ class int_vector_buffer
                 m_ofile.seekp(m_offset+(m_begin*width())/8);
                 assert(m_ofile.good());
                 if (m_begin+m_buffersize >= m_size) {
-                    //last block in file
-                    uint64_t wb = ((m_size-m_begin)*width()+7)/8;
+                    //last block in file: write whole 64-bit words (unused tail bits of the buffer are zero)
+                    uint64_t wb = (((m_size-m_begin)*width()+63)/64)*8;
                     m_ofile.write((char*) m_buffer.data(), wb);
                 } else {
                     m_ofile.write((char*) m_buffer.data(), (m_buffersize*width())/8);
@@ -335,18 +335,11 @@ class int_vector_buffer
             if (is_open()) {
                 if (!remove_file) {
                     write_block();
-                    if (0 < m_offset) { // in case of int_vector, write header and trailing zeros
+                    if (0 < m_offset) { // in case of int_vector, write header
                         uint64_t size = m_size*width();
                         m_ofile.seekp(0, std::ios::beg);
                         int_vector<t_width>::write_header(size, width(), m_ofile);
                         assert(m_ofile.good());
-                        uint64_t wb = (size+7)/8;
-                        if (wb%8) {
-                            m_ofile.seekp(m_offset+wb);
-                            assert(m_ofile.good());
-                            m_ofile.write("\0\0\0\0\0\0\0\0", 8-wb%8);
-                            assert(m_ofile.good());
-                        }
                     }
                 }
                 m_ifile.close();
