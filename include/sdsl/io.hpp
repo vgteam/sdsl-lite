@@ -33,6 +33,15 @@
 namespace sdsl
 {
 
+namespace detail
+{
+inline bool is_little_endian()
+{
+    const uint32_t one = 1;
+    return *reinterpret_cast<const unsigned char*>(&one) == 1;
+}
+}
+
 template<typename T>
 void load_vector(std::vector<T>&, std::istream&);
 
@@ -171,8 +180,7 @@ void load(std::vector<X>& x, std::istream& in)
 template<class T>
 bool load_from_file(T& v, const std::string& file);
 
-//! Load an int_vector from a plain array of `num_bytes`-byte integers with X in \{0, 1,2,4,8\} from disk.
-// TODO: Remove ENDIAN dependency.
+//! Load an int_vector from a plain array of `num_bytes`-byte little-endian integers.
 template<class t_int_vec>
 bool load_vector_from_file(t_int_vec& v, const std::string& file, uint8_t num_bytes=1, uint8_t max_int_width=64)
 {
@@ -262,7 +270,7 @@ template<uint8_t t_width>
 bool store_to_file(const int_vector<t_width>& v, const std::string& file, bool write_fixed_as_variable=false);
 
 
-//! Store an int_vector as plain int_type array to disk
+//! Store an int_vector as a plain array of little-endian int_type values.
 template<class int_type, class t_int_vec>
 bool store_to_plain_array(t_int_vec& v, const std::string& file)
 {
@@ -270,7 +278,11 @@ bool store_to_plain_array(t_int_vec& v, const std::string& file)
     if (out) {
         for (typename t_int_vec::size_type i=0; i<v.size(); ++i) {
             int_type x = v[i];
-            out.write((char*)&x, sizeof(int_type));
+            auto* bytes = reinterpret_cast<char*>(&x);
+            if (!detail::is_little_endian()) {
+                std::reverse(bytes, bytes + sizeof(x));
+            }
+            out.write(bytes, sizeof(x));
         }
         return true;
     } else {

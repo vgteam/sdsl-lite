@@ -124,6 +124,7 @@ class int_vector_mapper
             : int_vector_mapper(cache_file_name(key, config)) {}
 
 
+        //! Plain mappings expose the file directly as native-endian integers.
         int_vector_mapper(const std::string filename,
                           bool is_plain = false,
                           bool delete_on_close = false) :

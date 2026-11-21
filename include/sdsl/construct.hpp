@@ -80,7 +80,7 @@ void construct_im(t_index& idx, t_data data, uint8_t num_bytes=0)
  * \
  * \param num_bytes 	If `num_bytes` equals 0, the file format is a serialized
  *				    	int_vector<>. Otherwise the file is interpreted as sequence
- *                  	of `num_bytes`-byte integer stored in big endian order.
+ *                  	of `num_bytes`-byte integers stored in little-endian order.
  */
 template<class t_index>
 void construct(t_index& idx, const std::string& file, cache_config& config, uint8_t num_bytes=0)
