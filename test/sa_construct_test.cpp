@@ -42,6 +42,30 @@ TEST_F(sa_construct_test, divsufsort)
     cout << "# constructs_space = " << (1.0*memory_monitor::peak())/n << " byte per byte, =>" << memory_monitor::peak() << " bytes in total" << endl;
 }
 
+TEST_F(sa_construct_test, divsufsort_packed_output)
+{
+    const pair<string, vector<uint64_t>> cases[] = {
+        {"banana", {6, 5, 3, 1, 0, 4, 2}},
+        {"mississippi", {11, 10, 7, 4, 1, 0, 9, 8, 6, 3, 5, 2}},
+    };
+    for (const auto& test_case : cases) {
+        const auto& text = test_case.first;
+        const auto& expected = test_case.second;
+        const auto* input = reinterpret_cast<const unsigned char*>(text.c_str());
+        for (uint8_t width : {4, 32, 33}) {
+            SCOPED_TRACE(text);
+            SCOPED_TRACE(static_cast<int>(width));
+            int_vector<> sa(expected.size(), 0, width);
+            algorithm::calculate_sa(input, expected.size(), sa);
+            ASSERT_EQ(width, sa.width());
+            ASSERT_EQ(expected.size(), sa.size());
+            for (size_t i=0; i<expected.size(); ++i) {
+                EXPECT_EQ(expected[i], sa[i]) << "at position " << i;
+            }
+        }
+    }
+}
+
 TEST_F(sa_construct_test, sesais)
 {
     // Construct SA with seSAIS

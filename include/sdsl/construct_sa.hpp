@@ -33,6 +33,8 @@
 #include "construct_sa_se.hpp"
 #include "construct_config.hpp"
 
+#include <cstring>
+
 namespace sdsl
 {
 
@@ -89,6 +91,20 @@ void calculate_sa(const unsigned char* c, typename int_vector<fixedIntWidth>::si
             sa.width(32);
             sa.resize(len);
             divsufsort(c, (int32_t*)sa.data(), len);
+            const uint32_t endian_probe = 1;
+            if (fixedIntWidth == 0 and *reinterpret_cast<const unsigned char*>(&endian_probe) == 0) {
+                // Packed entries start at the low bits of each word, while
+                // divsufsort writes native 32-bit entries in address order.
+                for (size_type i=0; i<len/2; ++i) {
+                    uint64_t word = sa.data()[i];
+                    sa.data()[i] = (word >> 32) | (word << 32);
+                }
+                if (len%2 != 0) {
+                    uint32_t last;
+                    std::memcpy(&last, sa.data()+len/2, sizeof(last));
+                    sa.data()[len/2] = last;
+                }
+            }
             // copy integers back to the right positions
             if (oldIntWidth!=32) {
                 for (size_type i=0; i<len; ++i) {
@@ -101,7 +117,7 @@ void calculate_sa(const unsigned char* c, typename int_vector<fixedIntWidth>::si
             if (sa.width() < bits::hi(len)+1) {
                 throw std::logic_error("width of int_vector is to small for the text!!!");
             }
-            int_vector<> sufarray(len,0,32);
+            int_vector<32> sufarray(len,0);
             divsufsort(c, (int32_t*)sufarray.data(), len);
             for (size_type i=0; i<len; ++i) {
                 sa[i] = sufarray[i];
