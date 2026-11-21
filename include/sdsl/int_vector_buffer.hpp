@@ -26,6 +26,7 @@
 #include <cassert>
 #include <fstream>
 #include <iostream>
+#include <numeric>
 #include <stdio.h>
 #include <string>
 
@@ -53,6 +54,16 @@ class int_vector_buffer
         uint64_t            m_buffersize = 8;    // in elements! m_buffersize*width() must be a multiple of 8!
         uint64_t            m_size       = 0;    // size of int_vector_buffer
         uint64_t            m_begin      = 0;    // number in elements
+
+        bool uses_word_aligned_io() const
+        {
+            // These specializations store native elements in address order.
+            constexpr bool native_elements = t_width == 8 || t_width == 16 ||
+                                             t_width == 32 || t_width == 64;
+            const uint32_t endian_probe = 1;
+            return m_offset != 0 && !native_elements &&
+                   *reinterpret_cast<const unsigned char*>(&endian_probe) == 0;
+        }
 
         //! Read block containing element at index idx.
         void read_block(const uint64_t idx)
@@ -83,6 +94,9 @@ class int_vector_buffer
                 if (m_begin+m_buffersize >= m_size) {
                     //last block in file
                     uint64_t wb = ((m_size-m_begin)*width()+7)/8;
+                    if (uses_word_aligned_io()) {
+                        wb = (wb + 7) / 8 * 8;
+                    }
                     m_ofile.write((char*) m_buffer.data(), wb);
                 } else {
                     m_ofile.write((char*) m_buffer.data(), (m_buffersize*width())/8);
@@ -260,7 +274,7 @@ class int_vector_buffer
             return (m_buffersize*width())/8;
         }
 
-        //! Set the buffersize in bytes
+        //! Set the buffersize in bytes, rounding up to a whole word for big-endian packed data.
         void buffersize(uint64_t buffersize)
         {
             if (0ULL == buffersize)
@@ -271,6 +285,11 @@ class int_vector_buffer
             } else {
                 uint64_t element_buffersize = (buffersize*8)/width()+1; // one more element than fits into given buffersize in byte
                 m_buffersize = element_buffersize+7 - (element_buffersize+7)%8; // take next multiple of 8
+            }
+            if (uses_word_aligned_io()) {
+                // An element boundary must also be a word boundary in the file.
+                const uint64_t alignment = 64 / std::gcd(64, width());
+                m_buffersize += (alignment - m_buffersize % alignment) % alignment;
             }
             m_buffer = int_vector<t_width>(m_buffersize, 0, width());
             if (0!=m_buffersize) read_block(0);
@@ -341,7 +360,8 @@ class int_vector_buffer
                         int_vector<t_width>::write_header(size, width(), m_ofile);
                         assert(m_ofile.good());
                         uint64_t wb = (size+7)/8;
-                        if (wb%8) {
+                        // Big-endian packed blocks already include the final word.
+                        if (wb%8 && !uses_word_aligned_io()) {
                             m_ofile.seekp(m_offset+wb);
                             assert(m_ofile.good());
                             m_ofile.write("\0\0\0\0\0\0\0\0", 8-wb%8);

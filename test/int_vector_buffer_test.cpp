@@ -401,6 +401,57 @@ void test_file_handling(size_type exp_w)
     ivb2.close(true);
 }
 
+template<uint8_t t_width>
+void test_serialized_tail(uint8_t width, size_type size)
+{
+    SCOPED_TRACE(static_cast<int>(width));
+    SCOPED_TRACE(size);
+    const std::string filename = temp_dir + "/int_vector_buffer_tail";
+    const size_type buffer_bytes = 3;
+    sdsl::int_vector<t_width> expected(size, 0, width);
+    for (size_type i = 0; i < size; ++i) {
+        expected[i] = 1 + i % sdsl::bits::lo_set[width];
+    }
+
+    ASSERT_TRUE(sdsl::store_to_file(expected, filename));
+    {
+        sdsl::int_vector_buffer<t_width> input(filename, std::ios::in, buffer_bytes);
+        ASSERT_EQ(size, input.size());
+        for (size_type i = 0; i < size; ++i) {
+            EXPECT_EQ(expected[i], static_cast<value_type>(input[i])) << "at " << i;
+        }
+    }
+    sdsl::int_vector<t_width> loaded;
+    ASSERT_TRUE(sdsl::load_from_file(loaded, filename));
+    ASSERT_EQ(size, loaded.size());
+    for (size_type i = 0; i < size; ++i) {
+        EXPECT_EQ(expected[i], loaded[i]) << "after closing reader at " << i;
+    }
+
+    {
+        sdsl::int_vector_buffer<t_width> output(filename, std::ios::out, buffer_bytes, width);
+        for (size_type i = 0; i < size; ++i) {
+            output.push_back(expected[i]);
+        }
+    }
+    ASSERT_TRUE(sdsl::load_from_file(loaded, filename));
+    ASSERT_EQ(size, loaded.size());
+    for (size_type i = 0; i < size; ++i) {
+        EXPECT_EQ(expected[i], loaded[i]) << "after writing at " << i;
+    }
+    sdsl::remove(filename);
+}
+
+TEST_F(int_vector_buffer_test, serialized_tail)
+{
+    test_serialized_tail<0>(4, 12);
+    test_serialized_tail<0>(4, 29);
+    test_serialized_tail<0>(13, 67);
+    test_serialized_tail<1>(1, 67);
+    test_serialized_tail<13>(13, 67);
+    test_serialized_tail<8>(8, 29);
+}
+
 template<class t_T>
 void test_plain_file_handling(uint8_t exp_w)
 {
