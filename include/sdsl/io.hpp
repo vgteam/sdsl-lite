@@ -94,7 +94,7 @@ struct has_load {
 template<class T>
 size_t write_member(const T& t, std::ostream& out, sdsl::structure_tree_node* v=nullptr, std::string name="")
 {
-    sdsl::structure_tree_node* child = sdsl::structure_tree::add_child(v, name, util::class_name(t));
+    sdsl::structure_tree_node* child = v ? sdsl::structure_tree::add_child(v, name, util::class_name(t)) : nullptr;
     out.write((char*)&t, sizeof(t));
     size_t written_bytes = sizeof(t);
     sdsl::structure_tree::add_size(child, written_bytes);

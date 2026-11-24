@@ -1605,7 +1605,7 @@ typename int_vector<t_width>::size_type int_vector<t_width>::serialize(std::ostr
         std::string name,
         bool write_fixed_as_variable) const
 {
-    structure_tree_node* child = structure_tree::add_child(v, name, util::class_name(*this));
+    structure_tree_node* child = v ? structure_tree::add_child(v, name, util::class_name(*this)) : nullptr;
     size_type written_bytes = 0;
     if (t_width > 0 and write_fixed_as_variable) {
         written_bytes += int_vector<0>::write_header(m_size, t_width, out);
